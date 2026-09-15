@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大亞 AI 機電維修決策平台 (專業領域互動版)</title>
+    <title>大亞 AI 機電維修決策平台 (實務流轉版)</title>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -36,7 +36,6 @@
             overflow: hidden;
         }
 
-        /* 頂部 Header */
         .app-header {
             background-color: var(--bg-nav);
             padding: 10px 16px;
@@ -75,7 +74,6 @@
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* 主內容區域 */
         .content-container {
             flex: 1;
             overflow-y: auto;
@@ -87,7 +85,6 @@
         .tab-panel.active { display: block; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 卡片風格 */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -112,7 +109,6 @@
             gap: 6px;
         }
 
-        /* 模擬控制板 */
         .sim-control-box {
             background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.8));
             border: 1px dashed var(--primary);
@@ -144,7 +140,6 @@
             box-shadow: 0 0 8px rgba(56,189,248,0.4);
         }
 
-        /* 領域切換切換鈕 (機械 / 電氣) */
         .domain-selector {
             display: flex;
             background: rgba(0,0,0,0.3);
@@ -171,7 +166,6 @@
             box-shadow: 0 0 6px rgba(56,189,248,0.3);
         }
 
-        /* 數據網格與 Canvas */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -202,7 +196,6 @@
             margin-top: 8px;
         }
 
-        /* AI 對話框 */
         .chat-box {
             background: #080d1a;
             border: 1px solid var(--border);
@@ -249,7 +242,6 @@
             cursor: pointer;
         }
 
-        /* SOP 檢核表 */
         .sop-list { display: flex; flex-direction: column; gap: 8px; }
         .sop-item {
             display: flex;
@@ -265,7 +257,6 @@
         .sop-item:hover { background: rgba(255,255,255,0.06); }
         .sop-item input { accent-color: var(--primary); width: 16px; height: 16px; }
 
-        /* 相機與視覺辨識 */
         .vision-preview {
             position: relative;
             width: 100%;
@@ -277,7 +268,6 @@
             justify-content: center;
             align-items: center;
             border: 1px solid var(--border);
-            transition: all 0.3s;
         }
         .bbox {
             position: absolute;
@@ -302,11 +292,12 @@
             border: none;
             padding: 10px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             margin-top: 8px;
             cursor: pointer;
         }
+
         .toast {
             position: fixed;
             top: 20px;
@@ -321,6 +312,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             transition: transform 0.3s ease;
             z-index: 2000;
+            text-align: center;
+            max-width: 90%;
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -348,7 +341,7 @@
 </head>
 <body>
 
-    <div id="toast" class="toast">✓ 派工成功！已將專屬 SOP 派送至現場人員手機</div>
+    <div id="toast" class="toast">✓ 操作完成！</div>
 
     <header class="app-header">
         <div class="app-title">⚡ 大亞 AI 機電維修平台</div>
@@ -360,9 +353,8 @@
 
     <main class="content-container">
 
-        <!-- 頁籤 1: 即時監控與異常模擬器 -->
+        <!-- 頁籤 1: 即時監控 -->
         <div id="tab-overview" class="tab-panel active">
-            
             <div class="sim-control-box">
                 <div style="font-size:11px; font-weight:bold; color:var(--primary); display:flex; justify-content:space-between;">
                     <span>🎮 評審體驗：動態故障模擬切換</span>
@@ -434,10 +426,9 @@
             </div>
         </div>
 
-        <!-- 頁籤 3: 視覺識別與動態 SOP 檢核 (按領域連動) -->
+        <!-- 頁籤 3: 視覺識別與動態 SOP (符合實務現場流轉) -->
         <div id="tab-vision" class="tab-panel">
             
-            <!-- 機械 vs 電氣 領域切換按鈕 -->
             <div class="domain-selector">
                 <button id="btn-domain-mech" class="domain-btn active" onclick="setDomainMode('mech')">⚙️ 機械維護 (熱影像/軸承)</button>
                 <button id="btn-domain-elec" class="domain-btn" onclick="setDomainMode('elec')">⚡ 電氣維護 (銘牌/繞組/端子)</button>
@@ -450,7 +441,6 @@
                 </div>
 
                 <div class="vision-preview">
-                    <!-- Bounding Box 識別框 -->
                     <div id="visionBox" class="bbox" style="top:25%; left:30%; width:110px; height:80px;">
                         🔥 熱點: 88.5°C<br>(驅動端軸承)
                     </div>
@@ -462,15 +452,18 @@
 
             <div class="card">
                 <div class="card-title" style="margin-bottom:8px;">
-                    <span id="sop-title">🛠️ AI 動態生成：機械軸承排查 SOP</span>
+                    <span id="sop-title">🛠️ 現場檢修 SOP 檢核表</span>
                 </div>
                 
-                <!-- 動態注入的 SOP Checklist -->
                 <div id="sopContainer" class="sop-list">
-                    <!-- JS 會根據機械/電氣動態更新內容 -->
+                    <!-- JS 動態寫入 SOP -->
                 </div>
 
-                <button class="btn-action" style="background:var(--success);" onclick="triggerDispatch()">一鍵智慧派工與備品鎖定</button>
+                <!-- 🎯 實務焦點：現場完工 vs 異常升級 雙按鈕 -->
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                    <button class="btn-action" style="background:var(--success); flex:1.2;" onclick="triggerComplete()">✅ 完工簽核與紀錄存檔</button>
+                    <button class="btn-action" style="background:var(--bg-nav); border:1px solid var(--border); color:var(--text-sub); flex:1;" onclick="triggerEscalate()">🚨 申請大修/領用備品</button>
+                </div>
             </div>
         </div>
 
@@ -511,7 +504,6 @@
     </nav>
 
     <script>
-        // 切換頁籤
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -520,7 +512,6 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
-        // 動態 Canvas 波形
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
         let waveOffset = 0;
@@ -557,7 +548,6 @@
         }
         drawWaveform();
 
-        // 模擬跳動數據
         setInterval(() => {
             let tempEl = document.getElementById('val-temp');
             let vibEl = document.getElementById('val-vib');
@@ -572,7 +562,6 @@
             ampEl.innerText = (baseAmp + (Math.random() * 0.6 - 0.3)).toFixed(1);
         }, 1200);
 
-        // 評審故障模擬切換
         function setSimMode(mode, btn) {
             currentMode = mode;
             document.querySelectorAll('.sim-btn').forEach(b => b.classList.remove('active'));
@@ -599,7 +588,7 @@
                 <b>AI 概率診斷：</b><br>
                 1. 軸承潤滑油乾涸 / 磨損 (82% 可能性)<br>
                 2. 軸心偏心不良 (12% 可能性)<br>
-                💡 建議切換至「視覺SOP」的<b>機械維護模式</b>執行潤滑與對心校正。`;
+                💡 建議現場維修員至「視覺SOP」執行補充潤滑油與雷射對心。`;
             } else if(mode === 'fault2') {
                 statusText.innerText = '[⚠️ 絕緣警示]';
                 statusText.style.color = 'var(--warning)';
@@ -610,11 +599,10 @@
                 <b>AI 概率診斷：</b><br>
                 1. 馬達繞組線圈局部絕緣衰退 (68% 可能性)<br>
                 2. 端子台鬆脫接觸不良 (24% 可能性)<br>
-                💡 建議切換至「視覺SOP」的<b>電氣維護模式</b>執行絕緣測量 (Megger)。`;
+                💡 建議現場電氣技師至「視覺SOP」執行 Megger 1000V 絕緣測試。`;
             }
         }
 
-        // 🎯 核心重點：機械維護 vs 電氣維護 連動切換
         function setDomainMode(domain) {
             const btnMech = document.getElementById('btn-domain-mech');
             const btnElec = document.getElementById('btn-domain-elec');
@@ -637,16 +625,16 @@
                 bbox.innerHTML = '🔥 熱點: 88.5°C<br>(驅動端軸承)';
                 label.innerText = '📸 FLIR 紅外線熱影像分析 (過熱區域辨識)';
 
-                sopTitle.innerText = '🛠️ AI 動態生成：機械軸承排查 SOP';
+                sopTitle.innerText = '🛠️ 現場機械軸承檢修 SOP';
                 sopContainer.innerHTML = `
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox" checked> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電與標示
+                        <input type="checkbox" checked> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電標示
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox"> ❷ 使用自動潤滑槍注補充 SKF LGHP 2 高溫潤滑油脂
+                        <input type="checkbox"> ❷ 使用自動潤滑槍補充 SKF LGHP 2 高溫潤滑脂
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox"> ❸ 使用雷射對心儀 (Laser Alignment) 量測軸心偏心量
+                        <input type="checkbox"> ❸ 使用雷射對心儀 (Laser Alignment) 校正偏心量
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
                         <input type="checkbox"> ❹ 鎖固地腳螺栓並以振動計複測 (目標 < 2.8 mm/s)
@@ -664,28 +652,26 @@
                 bbox.innerHTML = '🏷️ 銘牌 OCR 辨識<br>380V / 71.5A / 37kW';
                 label.innerText = '📸 銘牌與控制盤面圖像辨識 (電氣參數標籤)';
 
-                sopTitle.innerText = '⚡ AI 動態生成：電氣絕緣與檢測 SOP';
+                sopTitle.innerText = '⚡ 現場電氣絕緣與阻值檢測 SOP';
                 sopContainer.innerHTML = `
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox" checked> ❶ 執行高壓盤面斷電，並使用三用電表確認無殘留電壓
+                        <input type="checkbox" checked> ❶ 高壓盤面斷電，並使用三用電表確認無殘留電壓
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值 (不平衡率 < 2%)
+                        <input type="checkbox"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值 (> 100 MΩ)
+                        <input type="checkbox"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❹ 以扭力板手鎖固二次側端子台，並以熱像儀確認無異常溫升
+                        <input type="checkbox"> ❹ 扭力板手鎖固二次側端子台，熱像儀確認無異常溫升
                     </label>
                 `;
             }
         }
 
-        // 初始化預設為機械模式 SOP
         setDomainMode('mech');
 
-        // AI 對話打字效果
         function askAI(questionText) {
             const chatBox = document.getElementById('chatBox');
             
@@ -721,11 +707,22 @@
             }, 800);
         }
 
-        // Toast 派工
-        function triggerDispatch() {
+        // 完工簽核觸發
+        function triggerComplete() {
             const toast = document.getElementById('toast');
+            toast.innerText = '✅ 完工簽核成功！數據已存入 EAM 設備履歷，SCADA 恢復綠燈';
+            toast.style.background = 'var(--success)';
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // 異常升級觸發
+        function triggerEscalate() {
+            const toast = document.getElementById('toast');
+            toast.innerText = '🚨 現場處置無效：已自動發送「大亞機電大修單」並預扣 SKF 備品庫存！';
+            toast.style.background = 'var(--danger)';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
     </script>
 </body>
