@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大亞 AI 機電維修決策平台 (三階段處置版)</title>
+    <title>大亞 AI 機電維修決策平台 (模擬版)</title>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -225,21 +225,26 @@
             align-self: flex-end;
         }
 
+        /* 🎯 自動換行樣式修改 */
         .prompt-chips {
             display: flex;
-            gap: 6px;
-            overflow-x: auto;
+            flex-wrap: wrap; /* 👈 關鍵：自動折行 */
+            gap: 6px 8px;
             padding: 6px 0;
         }
         .chip {
-            white-space: nowrap;
+            white-space: nowrap; /* 確保個別按鈕內部文字不拆斷 */
             background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 14px;
             font-size: 11px;
             color: var(--text-main);
             cursor: pointer;
+            transition: background 0.2s;
+        }
+        .chip:active {
+            background: var(--primary-dark);
         }
 
         .sop-list { display: flex; flex-direction: column; gap: 8px; }
@@ -447,7 +452,7 @@
             </div>
         </div>
 
-        <!-- 頁籤 3: 視覺識別與動態 SOP (符合三處置邏輯) -->
+        <!-- 頁籤 3: 視覺識別與動態 SOP -->
         <div id="tab-vision" class="tab-panel">
             
             <div class="domain-selector">
@@ -477,7 +482,6 @@
                     <span id="sop-progress-tag" style="font-size:10px; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px;">檢修中 (0/4)</span>
                 </div>
 
-                <!-- 維修工時紀錄欄位 -->
                 <div class="time-box">
                     <span>⏱️ 本次工單累計總維修工時：</span>
                     <span id="total-hours-display" style="font-weight:bold; color:var(--primary); font-family:monospace; font-size:12px;">1.5 小時</span>
@@ -487,7 +491,6 @@
                     <!-- JS 動態寫入 SOP -->
                 </div>
 
-                <!-- 🎯 現場三按鈕處置架構 -->
                 <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; margin-top:12px;">
                     <button id="btn-complete" class="btn-action" style="background:var(--success);" disabled onclick="triggerComplete()">✅ 完工結案</button>
                     <button id="btn-pause" class="btn-action" style="background:var(--warning); color:#000;" onclick="triggerPause()">⏸️ 暫停維修</button>
@@ -533,7 +536,7 @@
     </nav>
 
     <script>
-        let accumulatedHours = 1.5; // 預設初始工時 1.5 小時
+        let accumulatedHours = 1.5;
 
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -779,7 +782,6 @@
             }, 800);
         }
 
-        // 1. 完工結案處置 (當天完全排除)
         function triggerComplete() {
             const btnComplete = document.getElementById('btn-complete');
             const btnPause = document.getElementById('btn-pause');
@@ -787,14 +789,13 @@
 
             btnComplete.innerText = '🎉 已完工結案';
             btnPause.disabled = true;
-            btnEscalate.disabled = true; // 鎖定二次派工按鈕
+            btnEscalate.disabled = true;
 
             showToast('✅ 當天成功排除！工單已完工結案，封鎖二次派工。', 'var(--success)');
         }
 
-        // 2. 暫停維修處置 (當天未完，累計工時，不觸發二次派工)
         function triggerPause() {
-            accumulatedHours += 2.0; // 追加 2.0 小時工時
+            accumulatedHours += 2.0;
             document.getElementById('total-hours-display').innerText = `${accumulatedHours.toFixed(1)} 小時`;
 
             const progressTag = document.getElementById('sop-progress-tag');
@@ -805,7 +806,6 @@
             showToast(`⏸️ 已記錄暫停維修！今日維修工時已追加累計（總計: ${accumulatedHours.toFixed(1)}h），未觸發二次派工。`, 'var(--warning)');
         }
 
-        // 3. 二次派工處置 (啟動後援並歸檔)
         function triggerEscalate() {
             const btnEscalate = document.getElementById('btn-escalate');
             btnEscalate.innerText = '🚨 已啟動二次派工';
