@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大亞 AI 機電維修決策平台 (實務流轉版)</title>
+    <title>大亞 AI 機電維修決策平台 (動態連動版)</title>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -253,9 +253,10 @@
             font-size: 12px;
             cursor: pointer;
             border-left: 3px solid transparent;
+            user-select: none;
         }
         .sop-item:hover { background: rgba(255,255,255,0.06); }
-        .sop-item input { accent-color: var(--primary); width: 16px; height: 16px; }
+        .sop-item input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
 
         .vision-preview {
             position: relative;
@@ -296,6 +297,16 @@
             font-weight: 600;
             margin-top: 8px;
             cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        
+        /* 停用按鈕樣式 */
+        .btn-action:disabled {
+            background: #1e293b !important;
+            color: #64748b !important;
+            border: 1px solid #334155 !important;
+            cursor: not-allowed !important;
+            opacity: 0.6;
         }
 
         .toast {
@@ -426,7 +437,7 @@
             </div>
         </div>
 
-        <!-- 頁籤 3: 視覺識別與動態 SOP (符合實務現場流轉) -->
+        <!-- 頁籤 3: 視覺識別與動態 SOP (動態連動版) -->
         <div id="tab-vision" class="tab-panel">
             
             <div class="domain-selector">
@@ -451,18 +462,20 @@
             </div>
 
             <div class="card">
-                <div class="card-title" style="margin-bottom:8px;">
+                <div class="card-title" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                     <span id="sop-title">🛠️ 現場檢修 SOP 檢核表</span>
+                    <span id="sop-progress-tag" style="font-size:10px; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px;">未完工 (0/4)</span>
                 </div>
+                <div style="font-size:10px; color:var(--text-sub); margin-bottom:10px;">💡 請現場人員完成下方所有 SOP 勾選後，方可觸發完工簽核：</div>
                 
                 <div id="sopContainer" class="sop-list">
                     <!-- JS 動態寫入 SOP -->
                 </div>
 
-                <!-- 🎯 實務焦點：現場完工 vs 異常升級 雙按鈕 -->
-                <div style="display:flex; gap:8px; margin-top:12px;">
-                    <button class="btn-action" style="background:var(--success); flex:1.2;" onclick="triggerComplete()">✅ 完工簽核與紀錄存檔</button>
-                    <button class="btn-action" style="background:var(--bg-nav); border:1px solid var(--border); color:var(--text-sub); flex:1;" onclick="triggerEscalate()">🚨 申請大修/領用備品</button>
+                <!-- 🎯 實務焦點：動態解鎖完工 vs 觸發二次派工 雙按鈕 -->
+                <div style="display:flex; gap:8px; margin-top:14px;">
+                    <button id="btn-complete" class="btn-action" style="flex:1.2;" disabled onclick="triggerComplete()">🔒 請先完成 SOP 勾選</button>
+                    <button id="btn-escalate" class="btn-action" style="background:var(--bg-nav); border:1px solid var(--border); color:var(--text-sub); flex:1;" onclick="triggerEscalate()">🚨 現場無法排除：二次派工</button>
                 </div>
             </div>
         </div>
@@ -603,6 +616,7 @@
             }
         }
 
+        // 切換領域並重新生成 SOP 項目
         function setDomainMode(domain) {
             const btnMech = document.getElementById('btn-domain-mech');
             const btnElec = document.getElementById('btn-domain-elec');
@@ -612,6 +626,9 @@
             const label = document.getElementById('visionLabel');
             const sopTitle = document.getElementById('sop-title');
             const sopContainer = document.getElementById('sopContainer');
+
+            // 重置按鈕狀態
+            resetButtons();
 
             if(domain === 'mech') {
                 btnMech.classList.add('active');
@@ -628,16 +645,16 @@
                 sopTitle.innerText = '🛠️ 現場機械軸承檢修 SOP';
                 sopContainer.innerHTML = `
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox" checked> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電標示
+                        <input type="checkbox" onchange="checkSopProgress()"> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電標示
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox"> ❷ 使用自動潤滑槍補充 SKF LGHP 2 高溫潤滑脂
+                        <input type="checkbox" onchange="checkSopProgress()"> ❷ 使用自動潤滑槍補充 SKF LGHP 2 高溫潤滑脂
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox"> ❸ 使用雷射對心儀 (Laser Alignment) 校正偏心量
+                        <input type="checkbox" onchange="checkSopProgress()"> ❸ 使用雷射對心儀 (Laser Alignment) 校正偏心量
                     </label>
                     <label class="sop-item" style="border-left-color: var(--primary);">
-                        <input type="checkbox"> ❹ 鎖固地腳螺栓並以振動計複測 (目標 < 2.8 mm/s)
+                        <input type="checkbox" onchange="checkSopProgress()"> ❹ 鎖固地腳螺栓並以振動計複測 (目標 < 2.8 mm/s)
                     </label>
                 `;
             } else {
@@ -655,22 +672,66 @@
                 sopTitle.innerText = '⚡ 現場電氣絕緣與阻值檢測 SOP';
                 sopContainer.innerHTML = `
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox" checked> ❶ 高壓盤面斷電，並使用三用電表確認無殘留電壓
+                        <input type="checkbox" onchange="checkSopProgress()"> ❶ 高壓盤面斷電，並使用三用電表確認無殘留電壓
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值
+                        <input type="checkbox" onchange="checkSopProgress()"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值
+                        <input type="checkbox" onchange="checkSopProgress()"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值
                     </label>
                     <label class="sop-item" style="border-left-color: var(--warning);">
-                        <input type="checkbox"> ❹ 扭力板手鎖固二次側端子台，熱像儀確認無異常溫升
+                        <input type="checkbox" onchange="checkSopProgress()"> ❹ 扭力板手鎖固二次側端子台，熱像儀確認無異常溫升
                     </label>
                 `;
             }
+
+            checkSopProgress();
         }
 
-        setDomainMode('mech');
+        // 動態檢查 SOP 勾選進度
+        function checkSopProgress() {
+            const checkboxes = document.querySelectorAll('#sopContainer input[type="checkbox"]');
+            const btnComplete = document.getElementById('btn-complete');
+            const progressTag = document.getElementById('sop-progress-tag');
+            
+            let checkedCount = 0;
+            checkboxes.forEach(cb => { if(cb.checked) checkedCount++; });
+
+            const total = checkboxes.length;
+
+            if(checkedCount === total && total > 0) {
+                // 全部勾選完成：解鎖完工簽核按鈕
+                btnComplete.disabled = false;
+                btnComplete.style.background = 'var(--success)';
+                btnComplete.innerText = '✅ 完工簽核與數據歸檔';
+                
+                progressTag.innerText = `已完成 (${checkedCount}/${total})`;
+                progressTag.style.background = 'rgba(16,185,129,0.2)';
+                progressTag.style.color = 'var(--success)';
+            } else {
+                // 未全勾選：維持鎖定
+                btnComplete.disabled = true;
+                btnComplete.innerText = `🔒 完成 SOP 勾選後可簽核 (${checkedCount}/${total})`;
+                
+                progressTag.innerText = `檢核中 (${checkedCount}/${total})`;
+                progressTag.style.background = 'rgba(245,158,11,0.15)';
+                progressTag.style.color = 'var(--warning)';
+            }
+        }
+
+        function resetButtons() {
+            const btnComplete = document.getElementById('btn-complete');
+            const btnEscalate = document.getElementById('btn-escalate');
+
+            btnComplete.disabled = true;
+            btnComplete.innerText = '🔒 請先完成 SOP 勾選';
+            
+            btnEscalate.innerText = '🚨 現場無法排除：二次派工';
+            btnEscalate.style.background = 'var(--bg-nav)';
+            btnEscalate.style.border = '1px solid var(--border)';
+            btnEscalate.style.color = 'var(--text-sub)';
+        }
 
         function askAI(questionText) {
             const chatBox = document.getElementById('chatBox');
@@ -707,23 +768,36 @@
             }, 800);
         }
 
-        // 完工簽核觸發
+        // 觸發完工簽核
         function triggerComplete() {
+            const btnComplete = document.getElementById('btn-complete');
+            btnComplete.innerText = '🎉 已成功完成現場簽核！';
+            btnComplete.style.background = '#059669';
+
             const toast = document.getElementById('toast');
-            toast.innerText = '✅ 完工簽核成功！數據已存入 EAM 設備履歷，SCADA 恢復綠燈';
+            toast.innerText = '✅ 完工簽核成功！檢修數據已存入 EAM 設備履歷，SCADA 恢復綠燈';
             toast.style.background = 'var(--success)';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        // 異常升級觸發
+        // 觸發二次派工 (大修/預扣備品)
         function triggerEscalate() {
+            const btnEscalate = document.getElementById('btn-escalate');
+            btnEscalate.innerText = '🚨 已成功發送二次派工（工單#202609-088）';
+            btnEscalate.style.background = 'var(--danger)';
+            btnEscalate.style.color = '#ffffff';
+            btnEscalate.style.border = 'none';
+
             const toast = document.getElementById('toast');
-            toast.innerText = '🚨 現場處置無效：已自動發送「大亞機電大修單」並預扣 SKF 備品庫存！';
+            toast.innerText = '🚨 現場無法排除：已自動發送「大亞機電二次派工大修單」並預扣 SKF 備品庫存！';
             toast.style.background = 'var(--danger)';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
+
+        // 初始化機械領域 SOP
+        setDomainMode('mech');
     </script>
 </body>
 </html>
