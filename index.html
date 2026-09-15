@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大亞 AI 機電維修決策平台 (動態連動版)</title>
+    <title>大亞 AI 機電維修決策平台 (三階段處置版)</title>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -261,7 +261,7 @@
         .vision-preview {
             position: relative;
             width: 100%;
-            height: 180px;
+            height: 170px;
             background: #000;
             border-radius: 8px;
             overflow: hidden;
@@ -291,22 +291,20 @@
             background: var(--primary-dark);
             color: #fff;
             border: none;
-            padding: 10px;
+            padding: 9px 6px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            margin-top: 8px;
             cursor: pointer;
             transition: all 0.25s ease;
         }
         
-        /* 停用按鈕樣式 */
         .btn-action:disabled {
             background: #1e293b !important;
             color: #64748b !important;
             border: 1px solid #334155 !important;
             cursor: not-allowed !important;
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .toast {
@@ -348,6 +346,18 @@
             cursor: pointer;
         }
         .nav-btn.active { color: var(--primary); font-weight: bold; }
+
+        .time-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -410,7 +420,7 @@
                 <div id="ai-diagnosis-content" style="font-size:12px; line-height:1.6; color:var(--text-sub);">
                     目前設備運轉參數符合 ISO 國際標準，無異常預警。
                 </div>
-                <button class="btn-action" onclick="switchTab('tab-ai', document.querySelectorAll('.nav-btn')[1])">開啟 AI 維修助手深入對話</button>
+                <button class="btn-action" style="margin-top:8px;" onclick="switchTab('tab-ai', document.querySelectorAll('.nav-btn')[1])">開啟 AI 維修助手深入對話</button>
             </div>
         </div>
 
@@ -437,7 +447,7 @@
             </div>
         </div>
 
-        <!-- 頁籤 3: 視覺識別與動態 SOP (動態連動版) -->
+        <!-- 頁籤 3: 視覺識別與動態 SOP (符合三處置邏輯) -->
         <div id="tab-vision" class="tab-panel">
             
             <div class="domain-selector">
@@ -464,18 +474,24 @@
             <div class="card">
                 <div class="card-title" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                     <span id="sop-title">🛠️ 現場檢修 SOP 檢核表</span>
-                    <span id="sop-progress-tag" style="font-size:10px; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px;">未完工 (0/4)</span>
+                    <span id="sop-progress-tag" style="font-size:10px; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px;">檢修中 (0/4)</span>
                 </div>
-                <div style="font-size:10px; color:var(--text-sub); margin-bottom:10px;">💡 請現場人員完成下方所有 SOP 勾選後，方可觸發完工簽核：</div>
+
+                <!-- 維修工時紀錄欄位 -->
+                <div class="time-box">
+                    <span>⏱️ 本次工單累計總維修工時：</span>
+                    <span id="total-hours-display" style="font-weight:bold; color:var(--primary); font-family:monospace; font-size:12px;">1.5 小時</span>
+                </div>
                 
                 <div id="sopContainer" class="sop-list">
                     <!-- JS 動態寫入 SOP -->
                 </div>
 
-                <!-- 🎯 實務焦點：動態解鎖完工 vs 觸發二次派工 雙按鈕 -->
-                <div style="display:flex; gap:8px; margin-top:14px;">
-                    <button id="btn-complete" class="btn-action" style="flex:1.2;" disabled onclick="triggerComplete()">🔒 請先完成 SOP 勾選</button>
-                    <button id="btn-escalate" class="btn-action" style="background:var(--bg-nav); border:1px solid var(--border); color:var(--text-sub); flex:1;" onclick="triggerEscalate()">🚨 現場無法排除：二次派工</button>
+                <!-- 🎯 現場三按鈕處置架構 -->
+                <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; margin-top:12px;">
+                    <button id="btn-complete" class="btn-action" style="background:var(--success);" disabled onclick="triggerComplete()">✅ 完工結案</button>
+                    <button id="btn-pause" class="btn-action" style="background:var(--warning); color:#000;" onclick="triggerPause()">⏸️ 暫停維修</button>
+                    <button id="btn-escalate" class="btn-action" style="background:var(--danger);" onclick="triggerEscalate()">🚨 二次派工</button>
                 </div>
             </div>
         </div>
@@ -517,6 +533,8 @@
     </nav>
 
     <script>
+        let accumulatedHours = 1.5; // 預設初始工時 1.5 小時
+
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -616,7 +634,6 @@
             }
         }
 
-        // 切換領域並重新生成 SOP 項目
         function setDomainMode(domain) {
             const btnMech = document.getElementById('btn-domain-mech');
             const btnElec = document.getElementById('btn-domain-elec');
@@ -627,7 +644,6 @@
             const sopTitle = document.getElementById('sop-title');
             const sopContainer = document.getElementById('sopContainer');
 
-            // 重置按鈕狀態
             resetButtons();
 
             if(domain === 'mech') {
@@ -689,7 +705,6 @@
             checkSopProgress();
         }
 
-        // 動態檢查 SOP 勾選進度
         function checkSopProgress() {
             const checkboxes = document.querySelectorAll('#sopContainer input[type="checkbox"]');
             const btnComplete = document.getElementById('btn-complete');
@@ -701,19 +716,12 @@
             const total = checkboxes.length;
 
             if(checkedCount === total && total > 0) {
-                // 全部勾選完成：解鎖完工簽核按鈕
                 btnComplete.disabled = false;
-                btnComplete.style.background = 'var(--success)';
-                btnComplete.innerText = '✅ 完工簽核與數據歸檔';
-                
-                progressTag.innerText = `已完成 (${checkedCount}/${total})`;
+                progressTag.innerText = `SOP已全完成 (${checkedCount}/${total})`;
                 progressTag.style.background = 'rgba(16,185,129,0.2)';
                 progressTag.style.color = 'var(--success)';
             } else {
-                // 未全勾選：維持鎖定
                 btnComplete.disabled = true;
-                btnComplete.innerText = `🔒 完成 SOP 勾選後可簽核 (${checkedCount}/${total})`;
-                
                 progressTag.innerText = `檢核中 (${checkedCount}/${total})`;
                 progressTag.style.background = 'rgba(245,158,11,0.15)';
                 progressTag.style.color = 'var(--warning)';
@@ -722,15 +730,18 @@
 
         function resetButtons() {
             const btnComplete = document.getElementById('btn-complete');
+            const btnPause = document.getElementById('btn-pause');
             const btnEscalate = document.getElementById('btn-escalate');
 
             btnComplete.disabled = true;
-            btnComplete.innerText = '🔒 請先完成 SOP 勾選';
+            btnComplete.innerText = '✅ 完工結案';
+            btnComplete.style.background = 'var(--success)';
+
+            btnPause.disabled = false;
+            btnPause.innerText = '⏸️ 暫停維修';
             
-            btnEscalate.innerText = '🚨 現場無法排除：二次派工';
-            btnEscalate.style.background = 'var(--bg-nav)';
-            btnEscalate.style.border = '1px solid var(--border)';
-            btnEscalate.style.color = 'var(--text-sub)';
+            btnEscalate.disabled = false;
+            btnEscalate.innerText = '🚨 二次派工';
         }
 
         function askAI(questionText) {
@@ -768,35 +779,49 @@
             }, 800);
         }
 
-        // 觸發完工簽核
+        // 1. 完工結案處置 (當天完全排除)
         function triggerComplete() {
             const btnComplete = document.getElementById('btn-complete');
-            btnComplete.innerText = '🎉 已成功完成現場簽核！';
-            btnComplete.style.background = '#059669';
+            const btnPause = document.getElementById('btn-pause');
+            const btnEscalate = document.getElementById('btn-escalate');
 
-            const toast = document.getElementById('toast');
-            toast.innerText = '✅ 完工簽核成功！檢修數據已存入 EAM 設備履歷，SCADA 恢復綠燈';
-            toast.style.background = 'var(--success)';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3500);
+            btnComplete.innerText = '🎉 已完工結案';
+            btnPause.disabled = true;
+            btnEscalate.disabled = true; // 鎖定二次派工按鈕
+
+            showToast('✅ 當天成功排除！工單已完工結案，封鎖二次派工。', 'var(--success)');
         }
 
-        // 觸發二次派工 (大修/預扣備品)
+        // 2. 暫停維修處置 (當天未完，累計工時，不觸發二次派工)
+        function triggerPause() {
+            accumulatedHours += 2.0; // 追加 2.0 小時工時
+            document.getElementById('total-hours-display').innerText = `${accumulatedHours.toFixed(1)} 小時`;
+
+            const progressTag = document.getElementById('sop-progress-tag');
+            progressTag.innerText = '⏸️ 暫停維修中';
+            progressTag.style.background = 'rgba(245,158,11,0.2)';
+            progressTag.style.color = 'var(--warning)';
+
+            showToast(`⏸️ 已記錄暫停維修！今日維修工時已追加累計（總計: ${accumulatedHours.toFixed(1)}h），未觸發二次派工。`, 'var(--warning)');
+        }
+
+        // 3. 二次派工處置 (啟動後援並歸檔)
         function triggerEscalate() {
             const btnEscalate = document.getElementById('btn-escalate');
-            btnEscalate.innerText = '🚨 已成功發送二次派工（工單#202609-088）';
-            btnEscalate.style.background = 'var(--danger)';
-            btnEscalate.style.color = '#ffffff';
-            btnEscalate.style.border = 'none';
+            btnEscalate.innerText = '🚨 已啟動二次派工';
+            btnEscalate.disabled = true;
 
+            showToast('🚨 判斷需要二次派工！已發送後援大修申請單並記錄於維修履歷。', 'var(--danger)');
+        }
+
+        function showToast(message, bgColor) {
             const toast = document.getElementById('toast');
-            toast.innerText = '🚨 現場無法排除：已自動發送「大亞機電二次派工大修單」並預扣 SKF 備品庫存！';
-            toast.style.background = 'var(--danger)';
+            toast.innerText = message;
+            toast.style.background = bgColor;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
-        // 初始化機械領域 SOP
         setDomainMode('mech');
     </script>
 </body>
