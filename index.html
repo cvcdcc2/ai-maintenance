@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大亞 AI 機電維修決策平台 (高互動版)</title>
+    <title>大亞 AI 機電維修決策平台 (專業領域互動版)</title>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -87,7 +87,7 @@
         .tab-panel.active { display: block; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 通用卡片風格 */
+        /* 卡片風格 */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -112,7 +112,7 @@
             gap: 6px;
         }
 
-        /* 互動控制控制器 (Simulator Control) */
+        /* 模擬控制板 */
         .sim-control-box {
             background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.8));
             border: 1px dashed var(--primary);
@@ -144,7 +144,34 @@
             box-shadow: 0 0 8px rgba(56,189,248,0.4);
         }
 
-        /* 儀表數值網格 */
+        /* 領域切換切換鈕 (機械 / 電氣) */
+        .domain-selector {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 10px;
+        }
+        .domain-btn {
+            flex: 1;
+            padding: 6px 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .domain-btn.active {
+            background: var(--primary-dark);
+            color: white;
+            box-shadow: 0 0 6px rgba(56,189,248,0.3);
+        }
+
+        /* 數據網格與 Canvas */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -166,7 +193,6 @@
         }
         .stat-label { font-size: 10px; color: var(--text-sub); }
 
-        /* Canvas 波形圖 */
         .chart-box {
             width: 100%;
             height: 90px;
@@ -206,7 +232,6 @@
             align-self: flex-end;
         }
 
-        /* AI 提問快捷按鈕 */
         .prompt-chips {
             display: flex;
             gap: 6px;
@@ -223,9 +248,8 @@
             color: var(--text-main);
             cursor: pointer;
         }
-        .chip:hover { border-color: var(--primary); }
 
-        /* 可打勾 SOP 列表 */
+        /* SOP 檢核表 */
         .sop-list { display: flex; flex-direction: column; gap: 8px; }
         .sop-item {
             display: flex;
@@ -236,7 +260,9 @@
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
+            border-left: 3px solid transparent;
         }
+        .sop-item:hover { background: rgba(255,255,255,0.06); }
         .sop-item input { accent-color: var(--primary); width: 16px; height: 16px; }
 
         /* 相機與視覺辨識 */
@@ -251,6 +277,7 @@
             justify-content: center;
             align-items: center;
             border: 1px solid var(--border);
+            transition: all 0.3s;
         }
         .bbox {
             position: absolute;
@@ -259,8 +286,8 @@
             border-radius: 4px;
             display: flex;
             align-items: flex-start;
-            padding: 2px 4px;
-            font-size: 9px;
+            padding: 4px 6px;
+            font-size: 10px;
             color: #00ffcc;
             font-weight: bold;
             box-shadow: 0 0 10px rgba(0,255,204,0.5);
@@ -268,7 +295,6 @@
         }
         @keyframes pulseBbox { from { border-color: #00ffcc; } to { border-color: #38bdf8; } }
 
-        /* 按鈕與通知彈窗 */
         .btn-action {
             width: 100%;
             background: var(--primary-dark);
@@ -298,7 +324,6 @@
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
 
-        /* 底部導覽列 */
         .bottom-nav {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -323,10 +348,8 @@
 </head>
 <body>
 
-    <!-- Toast 提示視窗 -->
-    <div id="toast" class="toast">✓ 派工成功！工單 WO-20260915 已即時派送</div>
+    <div id="toast" class="toast">✓ 派工成功！已將專屬 SOP 派送至現場人員手機</div>
 
-    <!-- 頂部標題列 -->
     <header class="app-header">
         <div class="app-title">⚡ 大亞 AI 機電維修平台</div>
         <div class="live-tag">
@@ -340,7 +363,6 @@
         <!-- 頁籤 1: 即時監控與異常模擬器 -->
         <div id="tab-overview" class="tab-panel active">
             
-            <!-- 評審互動模擬控制板 -->
             <div class="sim-control-box">
                 <div style="font-size:11px; font-weight:bold; color:var(--primary); display:flex; justify-content:space-between;">
                     <span>🎮 評審體驗：動態故障模擬切換</span>
@@ -348,16 +370,15 @@
                 </div>
                 <div class="sim-btn-group">
                     <button class="sim-btn active" onclick="setSimMode('normal', this)">✅ 正常運轉</button>
-                    <button class="sim-btn" onclick="setSimMode('fault1', this)">🚨 軸承過熱 (AC-01)</button>
-                    <button class="sim-btn" onclick="setSimMode('fault2', this)">⚠️ 絕緣衰退 (M-02)</button>
+                    <button class="sim-btn" onclick="setSimMode('fault1', this)">🚨 軸承過熱 (機械)</button>
+                    <button class="sim-btn" onclick="setSimMode('fault2', this)">⚠️ 絕緣衰退 (電氣)</button>
                 </div>
             </div>
 
-            <!-- 即時動態數據卡片 -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📈 AC-01 馬達即時遙測 (Telemetry)</span>
-                    <span id="status-badge" class="badge" style="background:rgba(16,185,129,0.2); color:var(--success);">正常</span>
+                    <span class="card-title">📈 AC-01 高壓馬達即時遙測</span>
+                    <span id="status-badge" class="badge" style="background:rgba(16,185,129,0.2); color:var(--success); font-size:11px; padding:2px 6px; border-radius:4px;">正常</span>
                 </div>
 
                 <div class="stat-grid">
@@ -375,11 +396,10 @@
                     </div>
                 </div>
 
-                <div style="font-size:10px; color:var(--text-sub); margin-bottom:2px;">即時 Vibration 頻譜與震幅波形分析：</div>
+                <div style="font-size:10px; color:var(--text-sub); margin-bottom:2px;">即時 Vibration / Current 諧波與震幅波形：</div>
                 <canvas id="waveformCanvas" class="chart-box"></canvas>
             </div>
 
-            <!-- 動態 AI 診斷結果 -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">🤖 AI 即時根本原因分析 (RCA)</span>
@@ -398,14 +418,12 @@
                 <div style="font-size:11px; color:var(--text-sub); margin-top:2px;">結合內部設備手冊與歷史維修履歷之 RAG 知識庫</div>
             </div>
 
-            <!-- 對話記錄視窗 -->
             <div id="chatBox" class="chat-box">
                 <div class="msg msg-ai">
                     👋 您好！我是大亞 AI 維修助手。您可以點選下方快捷提問，或切換「總覽」分頁模擬故障事件，我將即時為您分析！
                 </div>
             </div>
 
-            <!-- 快捷提問 -->
             <div style="margin-top:8px;">
                 <div style="font-size:11px; color:var(--text-sub); margin-bottom:4px;">💡 快速詢問 AI 專家：</div>
                 <div class="prompt-chips">
@@ -416,51 +434,52 @@
             </div>
         </div>
 
-        <!-- 頁籤 3: 視覺/熱影像辨識與 SOP 派工 -->
+        <!-- 頁籤 3: 視覺識別與動態 SOP 檢核 (按領域連動) -->
         <div id="tab-vision" class="tab-panel">
+            
+            <!-- 機械 vs 電氣 領域切換按鈕 -->
+            <div class="domain-selector">
+                <button id="btn-domain-mech" class="domain-btn active" onclick="setDomainMode('mech')">⚙️ 機械維護 (熱影像/軸承)</button>
+                <button id="btn-domain-elec" class="domain-btn" onclick="setDomainMode('elec')">⚡ 電氣維護 (銘牌/繞組/端子)</button>
+            </div>
+
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📷 AI 視覺 / 熱影像辨識</span>
-                    <button style="background:var(--primary-dark); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;" onclick="toggleVisionMode()">切換模式 (熱影像/銘牌)</button>
+                    <span id="vision-card-title" class="card-title">📷 AI 視覺：熱影像熱點辨識</span>
+                    <span id="domain-badge" style="background:rgba(56,189,248,0.15); color:var(--primary); font-size:10px; padding:2px 6px; border-radius:4px;">機械領域</span>
                 </div>
 
                 <div class="vision-preview">
-                    <!-- 模擬熱影像圖片與動態 Bounding Box -->
+                    <!-- Bounding Box 識別框 -->
                     <div id="visionBox" class="bbox" style="top:25%; left:30%; width:110px; height:80px;">
-                        🔥 熱點: 88.5°C<br>(軸承驅動端)
+                        🔥 熱點: 88.5°C<br>(驅動端軸承)
                     </div>
                     <div id="visionLabel" style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.7); font-size:10px; padding:3px 8px; border-radius:4px;">
-                        📸 目前模式：FLIR 紅外線熱影像分析
+                        📸 FLIR 紅外線熱影像分析 (過熱區域辨識)
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title" style="margin-bottom:8px;">🛠️ AI 自動生成黃金排查 SOP</div>
-                <div class="sop-list">
-                    <label class="sop-item">
-                        <input type="checkbox" checked> ❶ 執行 Lockout/Tagout (LOTO) 安全斷電標示
-                    </label>
-                    <label class="sop-item">
-                        <input type="checkbox" id="chk2"> ❷ 使用三用電表量測三相線圈阻值 (U-V, V-W, W-U)
-                    </label>
-                    <label class="sop-item">
-                        <input type="checkbox" id="chk3"> ❸ 使用高阻計 (Megger) 量測對地絕緣阻值 (>100MΩ)
-                    </label>
-                    <label class="sop-item">
-                        <input type="checkbox"> ❹ 檢查自動潤滑油泵注入量與油質
-                    </label>
+                <div class="card-title" style="margin-bottom:8px;">
+                    <span id="sop-title">🛠️ AI 動態生成：機械軸承排查 SOP</span>
                 </div>
-                <button class="btn-action" style="background:var(--success);" onclick="triggerDispatch()">一鍵智慧派工並鎖定備品</button>
+                
+                <!-- 動態注入的 SOP Checklist -->
+                <div id="sopContainer" class="sop-list">
+                    <!-- JS 會根據機械/電氣動態更新內容 -->
+                </div>
+
+                <button class="btn-action" style="background:var(--success);" onclick="triggerDispatch()">一鍵智慧派工與備品鎖定</button>
             </div>
         </div>
 
-        <!-- 頁籤 4: 安全與 Safety Rule -->
+        <!-- 頁籤 4: 安全防護 -->
         <div id="tab-safety" class="tab-panel">
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">🛡️ Safety Rule 安全紅線檢核</span>
-                    <span class="badge" style="background:rgba(16,185,129,0.2); color:var(--success);">系統防護中</span>
+                    <span class="badge" style="background:rgba(16,185,129,0.2); color:var(--success); font-size:11px; padding:2px 6px; border-radius:4px;">系統防護中</span>
                 </div>
                 <div style="font-size:12px; line-height:1.8;">
                     ✓ 隔離防護機制：AI 僅擁有唯讀決策權，無法跳過 PLC 人機硬體連鎖控制。<br>
@@ -472,7 +491,6 @@
 
     </main>
 
-    <!-- 底部導覽列 -->
     <nav class="bottom-nav">
         <button class="nav-btn active" onclick="switchTab('tab-overview', this)">
             <span style="font-size:16px;">📊</span>
@@ -502,11 +520,11 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
-        // 即時動態波形繪製 (Canvas API)
+        // 動態 Canvas 波形
         const canvas = document.getElementById('waveformCanvas');
         const ctx = canvas.getContext('2d');
         let waveOffset = 0;
-        let currentMode = 'normal'; // 'normal', 'fault1', 'fault2'
+        let currentMode = 'normal';
 
         function drawWaveform() {
             canvas.width = canvas.offsetWidth;
@@ -516,13 +534,9 @@
             ctx.beginPath();
             ctx.lineWidth = 2;
             
-            if(currentMode === 'normal') {
-                ctx.strokeStyle = '#10b981';
-            } else if(currentMode === 'fault1') {
-                ctx.strokeStyle = '#ef4444';
-            } else {
-                ctx.strokeStyle = '#f59e0b';
-            }
+            if(currentMode === 'normal') ctx.strokeStyle = '#10b981';
+            else if(currentMode === 'fault1') ctx.strokeStyle = '#ef4444';
+            else ctx.strokeStyle = '#f59e0b';
 
             const width = canvas.width;
             const height = canvas.height;
@@ -543,7 +557,7 @@
         }
         drawWaveform();
 
-        // 模擬動態跳動數據
+        // 模擬跳動數據
         setInterval(() => {
             let tempEl = document.getElementById('val-temp');
             let vibEl = document.getElementById('val-vib');
@@ -558,7 +572,7 @@
             ampEl.innerText = (baseAmp + (Math.random() * 0.6 - 0.3)).toFixed(1);
         }, 1200);
 
-        // 評審切換模式
+        // 評審故障模擬切換
         function setSimMode(mode, btn) {
             currentMode = mode;
             document.querySelectorAll('.sim-btn').forEach(b => b.classList.remove('active'));
@@ -578,38 +592,108 @@
             } else if(mode === 'fault1') {
                 statusText.innerText = '[🚨 軸承過熱告警]';
                 statusText.style.color = 'var(--danger)';
-                badge.innerText = '高危告警';
+                badge.innerText = '機械高危';
                 badge.style.background = 'rgba(239,68,68,0.2)';
                 badge.style.color = 'var(--danger)';
-                aiDiag.innerHTML = `<span style="color:var(--danger); font-weight:bold;">🚨 偵測到軸承驅動端過熱 (88.5°C) 且振動值高達 6.8 mm/s！</span><br>
+                aiDiag.innerHTML = `<span style="color:var(--danger); font-weight:bold;">🚨 偵測到驅動端軸承過熱 (88.5°C) 且振動值達 6.8 mm/s！</span><br>
                 <b>AI 概率診斷：</b><br>
                 1. 軸承潤滑油乾涸 / 磨損 (82% 可能性)<br>
-                2. 軸心對心不良 (12% 可能性)<br>
-                💡 建議立即進行 SOP 停機排查，避免馬達燒毀。`;
+                2. 軸心偏心不良 (12% 可能性)<br>
+                💡 建議切換至「視覺SOP」的<b>機械維護模式</b>執行潤滑與對心校正。`;
             } else if(mode === 'fault2') {
                 statusText.innerText = '[⚠️ 絕緣警示]';
                 statusText.style.color = 'var(--warning)';
-                badge.innerText = '預警';
+                badge.innerText = '電氣預警';
                 badge.style.background = 'rgba(245,158,11,0.2)';
                 badge.style.color = 'var(--warning)';
-                aiDiag.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ 三相電流不平衡度達 7.2%，高於預警閾值。</span><br>
+                aiDiag.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ 三相電流不平衡度達 7.2%，阻值出現異常。</span><br>
                 <b>AI 概率診斷：</b><br>
-                1. 馬達繞組線圈老化/絕緣衰退 (68% 可能性)<br>
-                2. 預計造成 3.5% 額外電能耗損 (影響 ISO 50001 績效指標)。`;
+                1. 馬達繞組線圈局部絕緣衰退 (68% 可能性)<br>
+                2. 端子台鬆脫接觸不良 (24% 可能性)<br>
+                💡 建議切換至「視覺SOP」的<b>電氣維護模式</b>執行絕緣測量 (Megger)。`;
             }
         }
 
-        // AI 對話助手打字效應
+        // 🎯 核心重點：機械維護 vs 電氣維護 連動切換
+        function setDomainMode(domain) {
+            const btnMech = document.getElementById('btn-domain-mech');
+            const btnElec = document.getElementById('btn-domain-elec');
+            const titleEl = document.getElementById('vision-card-title');
+            const badgeEl = document.getElementById('domain-badge');
+            const bbox = document.getElementById('visionBox');
+            const label = document.getElementById('visionLabel');
+            const sopTitle = document.getElementById('sop-title');
+            const sopContainer = document.getElementById('sopContainer');
+
+            if(domain === 'mech') {
+                btnMech.classList.add('active');
+                btnElec.classList.remove('active');
+
+                titleEl.innerText = '📷 AI 視覺：熱影像熱點辨識';
+                badgeEl.innerText = '機械領域';
+                badgeEl.style.color = 'var(--primary)';
+
+                bbox.style.top = '25%'; bbox.style.left = '30%'; bbox.style.width = '110px'; bbox.style.height = '80px';
+                bbox.innerHTML = '🔥 熱點: 88.5°C<br>(驅動端軸承)';
+                label.innerText = '📸 FLIR 紅外線熱影像分析 (過熱區域辨識)';
+
+                sopTitle.innerText = '🛠️ AI 動態生成：機械軸承排查 SOP';
+                sopContainer.innerHTML = `
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox" checked> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電與標示
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox"> ❷ 使用自動潤滑槍注補充 SKF LGHP 2 高溫潤滑油脂
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox"> ❸ 使用雷射對心儀 (Laser Alignment) 量測軸心偏心量
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox"> ❹ 鎖固地腳螺栓並以振動計複測 (目標 < 2.8 mm/s)
+                    </label>
+                `;
+            } else {
+                btnElec.classList.add('active');
+                btnMech.classList.remove('active');
+
+                titleEl.innerText = '📷 AI 視覺：銘牌 OCR 與端子盤分析';
+                badgeEl.innerText = '電氣領域';
+                badgeEl.style.color = 'var(--warning)';
+
+                bbox.style.top = '20%'; bbox.style.left = '15%'; bbox.style.width = '160px'; bbox.style.height = '70px';
+                bbox.innerHTML = '🏷️ 銘牌 OCR 辨識<br>380V / 71.5A / 37kW';
+                label.innerText = '📸 銘牌與控制盤面圖像辨識 (電氣參數標籤)';
+
+                sopTitle.innerText = '⚡ AI 動態生成：電氣絕緣與檢測 SOP';
+                sopContainer.innerHTML = `
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox" checked> ❶ 執行高壓盤面斷電，並使用三用電表確認無殘留電壓
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值 (不平衡率 < 2%)
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值 (> 100 MΩ)
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox"> ❹ 以扭力板手鎖固二次側端子台，並以熱像儀確認無異常溫升
+                    </label>
+                `;
+            }
+        }
+
+        // 初始化預設為機械模式 SOP
+        setDomainMode('mech');
+
+        // AI 對話打字效果
         function askAI(questionText) {
             const chatBox = document.getElementById('chatBox');
             
-            // 增加使用者訊息
             const userMsg = document.createElement('div');
             userMsg.className = 'msg msg-user';
             userMsg.innerText = questionText;
             chatBox.appendChild(userMsg);
 
-            // 模擬 AI 思考回應
             const aiMsg = document.createElement('div');
             aiMsg.className = 'msg msg-ai';
             aiMsg.innerText = '🤖 分析中...';
@@ -619,14 +703,13 @@
             setTimeout(() => {
                 let answer = '';
                 if(questionText.includes('異常原因')) {
-                    answer = '根據即時 FF-震幅頻譜數據：目前 AC-01 在 2X 轉速頻率有明顯 Peak 值，且溫度高達 88.5°C。對照大亞維修知識庫，82% 為驅動端軸承缺少潤滑所致，建議調撥 SKF-6210 備品。';
+                    answer = '根據即時數據：AC-01 驅動端軸承高溫 88.5°C 且振動高達 6.8 mm/s。對照大亞知識庫，82% 為潤滑油脂乾涸；若是電氣不平衡 (7.2%) 則為繞組老化。';
                 } else if(questionText.includes('絕緣')) {
-                    answer = '【高壓馬達絕緣電阻標準 SOP】\n1. 必須將馬達三相開關隔離並掛牌 (LOTO)\n2. 使用 1000V 兆歐表 (Megger) 測量\n3. 對地絕緣阻值須大於 100 MΩ；三相相間阻值不平衡率應 < 2%。';
+                    answer = '【電氣維護：高壓馬達絕緣測量 SOP】\n1. 斷電驗電並執行 LOTO\n2. 使用 1000V Megger 測量\n3. 對地絕緣阻值須 > 100 MΩ；三相阻值不平衡率須 < 2%。';
                 } else {
-                    answer = '【ISO 50001 影響評估】\n目前軸承異常增加摩擦阻力，使馬達效率下降 4.2%，換算每年將額外浪費約 12,500 度電。修復後可立即恢復標稱能效。';
+                    answer = '【ISO 50001 影響評估】\n軸承摩擦阻力及電氣絕緣衰退會使馬達效率下降 4.2%，每年額外浪費約 12,500 度電。建議立即派工處置。';
                 }
 
-                // 打字效果
                 aiMsg.innerText = '';
                 let i = 0;
                 let timer = setInterval(() => {
@@ -638,25 +721,7 @@
             }, 800);
         }
 
-        // 切換視覺模式
-        let isThermal = true;
-        function toggleVisionMode() {
-            const bbox = document.getElementById('visionBox');
-            const label = document.getElementById('visionLabel');
-            isThermal = !isThermal;
-
-            if(isThermal) {
-                bbox.style.top = '25%'; bbox.style.left = '30%';
-                bbox.innerHTML = '🔥 熱點: 88.5°C<br>(軸承驅動端)';
-                label.innerText = '📸 目前模式：FLIR 紅外線熱影像分析';
-            } else {
-                bbox.style.top = '20%'; bbox.style.left = '15%';
-                bbox.innerHTML = '🏷️ 銘牌 OCR 辨識<br>380V / 71.5A / 37kW';
-                label.innerText = '📸 目前模式：銘牌自動 OCR 文字辨識';
-            }
-        }
-
-        // 觸發派工 Toast
+        // Toast 派工
         function triggerDispatch() {
             const toast = document.getElementById('toast');
             toast.classList.add('show');
