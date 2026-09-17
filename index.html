@@ -1,258 +1,298 @@
-<!-- 2. 機電設備維修分頁 (完整介面) -->
-<section id="tab-maintenance" class="tab-content hidden space-y-6">
-    
-    <!-- 頁面頂部標題與快捷操作 -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-4">
-        <div>
-            <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <i data-lucide="wrench" class="w-6 h-6 text-cyan-400"></i>
-                機電設備維修與 AI 診斷決策
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">思碼特平台 - 單一動作拍照報修、AI 原因排序與知識閉環回填</p>
-        </div>
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機電維修與能源 AI 決策平台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            accent: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- 上方導航欄 Top Header -->
+    <header class="h-16 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
         <div class="flex items-center space-x-3">
-            <button onclick="triggerQuickUpload()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold rounded-lg text-sm transition flex items-center space-x-2 shadow-lg shadow-cyan-500/20">
-                <i data-lucide="camera" class="w-4 h-4"></i>
-                <span>拍照/掃碼報修</span>
+            <div class="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                    機電維修與能源 AI 決策平台
+                </h1>
+                <p class="text-xs text-slate-400">Electromechanical Maintenance & Energy AI Platform</p>
+            </div>
+        </div>
+
+        <!-- 系統狀態與使用者資訊 -->
+        <div class="flex items-center space-x-4">
+            <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-slate-300">AI 監控引擎運作中</span>
+            </div>
+            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition">
+                <i data-lucide="bell" class="w-5 h-5"></i>
             </button>
-        </div>
-    </div>
-
-    <!-- 頂部四大維修指標 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p class="text-xs text-slate-400">今日維修工單</p>
-            <div class="flex items-baseline justify-between mt-1">
-                <h3 class="text-2xl font-bold text-slate-100">5 <span class="text-xs text-slate-400 font-normal">件</span></h3>
-                <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">2 件處理中</span>
-            </div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p class="text-xs text-slate-400">平均排查診斷工時</p>
-            <div class="flex items-baseline justify-between mt-1">
-                <h3 class="text-2xl font-bold text-emerald-400">12 <span class="text-xs text-slate-400 font-normal">分鐘</span></h3>
-                <span class="text-xs text-emerald-400">↓ 縮短 65%</span>
-            </div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p class="text-xs text-slate-400">關鍵備品安全庫存</p>
-            <div class="flex items-baseline justify-between mt-1">
-                <h3 class="text-2xl font-bold text-slate-100">66 <span class="text-xs text-slate-400 font-normal">台</span></h3>
-                <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">1 項低庫存</span>
-            </div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <p class="text-xs text-slate-400">AI 診斷採納率</p>
-            <div class="flex items-baseline justify-between mt-1">
-                <h3 class="text-2xl font-bold text-cyan-400">96.4 <span class="text-xs text-slate-400 font-normal">%</span></h3>
-                <span class="text-xs text-cyan-400">持續學習中</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主要操作區：左側 AI 診斷 / 右側工單與履歷 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- 左側：AI 現場診斷卡片 (佔 1 欄) -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="font-semibold text-slate-200 flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
-                    AI 即時故障診斷助手
-                </h3>
-                <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">OCR 雙軌辨識</span>
-            </div>
-
-            <!-- 模擬相機 / 圖片預覽區 -->
-            <div class="border-2 border-dashed border-slate-800 rounded-lg p-4 bg-slate-950/50 text-center hover:border-cyan-500/50 transition cursor-pointer" onclick="triggerQuickUpload()">
-                <img id="preview-img" src="https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=500&auto=format&fit=crop&q=60" alt="設備照片" class="w-full h-36 object-cover rounded mb-2 border border-slate-800">
-                <p class="text-xs text-slate-400">設備 ID：<span class="text-cyan-400 font-mono">PUMP-A03</span> (冷卻水泵馬達)</p>
-            </div>
-
-            <!-- AI 排序建議輸出區 -->
-            <div class="space-y-3 bg-slate-950/80 p-3.5 rounded-lg border border-slate-800/80 text-xs">
-                <div class="font-medium text-slate-300 border-b border-slate-800 pb-2 flex justify-between">
-                    <span>故障可能原因 (AI 機率排序)</span>
-                    <span class="text-emerald-400">信賴度 94%</span>
+            <div class="h-6 w-px bg-slate-800"></div>
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-cyan-400 border border-cyan-500/30">
+                    AI
                 </div>
-                <ol class="space-y-2">
-                    <li class="flex items-start space-x-2">
-                        <span class="bg-cyan-500/20 text-cyan-400 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold text-[10px]">1</span>
+                <span class="text-sm text-slate-300 font-medium hidden md:inline">系統管理員</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區 Main Content Area -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- 側邊欄 Navigation Sidebar (六大區塊分頁) -->
+        <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+            <div class="p-4 space-y-1">
+                <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    平台核心模組
+                </div>
+
+                <!-- 1. 總覽儀表板 -->
+                <button onclick="switchTab('tab-overview')" id="btn-tab-overview" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span>總覽儀表板</span>
+                </button>
+
+                <!-- 2. 機電設備維修與診斷 -->
+                <button onclick="switchTab('tab-maintenance')" id="btn-tab-maintenance" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+                    <i data-lucide="wrench" class="w-5 h-5"></i>
+                    <span>機電設備維修</span>
+                </button>
+
+                <!-- 3. 能源管理與 ISO 50001 -->
+                <button onclick="switchTab('tab-energy')" id="btn-tab-energy" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    <span>能源管理 ISO 50001</span>
+                </button>
+
+                <!-- 4. AI 智慧決策與預測 -->
+                <button onclick="switchTab('tab-ai-decision')" id="btn-tab-ai-decision" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+                    <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                    <span>AI 決策與預測</span>
+                </button>
+
+                <!-- 5. 異常診斷與警報 -->
+                <button onclick="switchTab('tab-alerts')" id="btn-tab-alerts" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <span>異常診斷與警報</span>
+                </button>
+
+                <!-- 6. 報表生成與系統設定 -->
+                <button onclick="switchTab('tab-settings')" id="btn-tab-settings" 
+                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+                    <i data-lucide="sliders" class="w-5 h-5"></i>
+                    <span>報表與系統設定</span>
+                </button>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
+                系統版本 v1.0.0-Beta
+            </div>
+        </aside>
+
+        <!-- 主展現區 Content Body -->
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
+
+            <!-- 1. 總覽儀表板內容 (預設顯示) -->
+            <section id="tab-overview" class="tab-content space-y-6">
+                <!-- 頂部 KPI 卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
                         <div>
-                            <p class="text-slate-200 font-medium">軸承磨損與偏心</p>
-                            <p class="text-slate-500 text-[11px]">90 天內已發生 2 次類似震動紀錄</p>
+                            <p class="text-xs text-slate-400">即時總用電負載</p>
+                            <h3 class="text-2xl font-bold text-slate-100 mt-1">1,280 <span class="text-sm font-normal text-slate-400">kW</span></h3>
+                            <p class="text-xs text-emerald-400 mt-1">↓ 較昨日降 4.2%</p>
                         </div>
-                    </li>
-                    <li class="flex items-start space-x-2">
-                        <span class="bg-slate-800 text-slate-400 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold text-[10px]">2</span>
-                        <p class="text-slate-400">聯軸器對中心偏移</p>
-                    </li>
-                    <li class="flex items-start space-x-2">
-                        <span class="bg-slate-800 text-slate-400 w-4 h-4 rounded-full flex items-center justify-center shrink-0 font-bold text-[10px]">3</span>
-                        <p class="text-slate-400">冷卻風扇葉片鬆動</p>
-                    </li>
-                </ol>
-
-                <div class="border-t border-slate-800 pt-2.5">
-                    <p class="font-medium text-slate-300 mb-1">建議檢查順序：</p>
-                    <p class="text-slate-400 leading-relaxed">① 使用測振筆量測驅動端軸承振幅 <br>② 檢查備品室 A/A-03-12 (庫存 2 台)</p>
-                </div>
-            </div>
-
-            <!-- 安全警語提示 (Safety Rules) -->
-            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300 flex items-start space-x-2">
-                <i data-lucide="shield-alert" class="w-4 h-4 shrink-0 text-amber-400 mt-0.5"></i>
-                <p>安全注意事項：開箱檢修前務必完成 Lockout/Tagout (上鎖掛牌) 作業，並確認斷電狀態。</p>
-            </div>
-        </div>
-
-        <!-- 右側：工單清單與設備主檔 (佔 2 欄) -->
-        <div class="lg:col-span-2 space-y-6">
-
-            <!-- 即時維修工單列表 -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold text-slate-200">進行中維修託修單</h3>
-                    <div class="flex space-x-2">
-                        <button class="px-2.5 py-1 text-xs bg-slate-800 text-slate-200 rounded hover:bg-slate-700 transition">全部</button>
-                        <button class="px-2.5 py-1 text-xs bg-amber-500/20 text-amber-400 rounded border border-amber-500/30">處理中 (2)</button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
-                            <tr>
-                                <th class="p-3">工單編號</th>
-                                <th class="p-3">設備 ID / 名稱</th>
-                                <th class="p-3">異常現象描述</th>
-                                <th class="p-3">優先度</th>
-                                <th class="p-3">狀態</th>
-                                <th class="p-3 text-right">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800">
-                            <tr class="hover:bg-slate-800/40 transition">
-                                <td class="p-3 font-mono text-cyan-400">WO-202609-001</td>
-                                <td class="p-3 font-medium text-slate-200">PUMP-A03 (水泵)</td>
-                                <td class="p-3 text-slate-400">運轉噪音過大、軸承溫度偏高</td>
-                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">高</span></td>
-                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">維修中</span></td>
-                                <td class="p-3 text-right">
-                                    <button onclick="openFeedbackModal('WO-202609-001')" class="text-cyan-400 hover:text-cyan-300 underline">完工回填</button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/40 transition">
-                                <td class="p-3 font-mono text-cyan-400">WO-202609-002</td>
-                                <td class="p-3 font-medium text-slate-200">INV-01 (變頻器)</td>
-                                <td class="p-3 text-slate-400">進氣濾芯堵塞警報發布</td>
-                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">中</span></td>
-                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400">待派工</span></td>
-                                <td class="p-3 text-right">
-                                    <button class="text-slate-400 hover:text-slate-200">查看詳情</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 備品庫存與替代料對照 (關鍵資料串接) -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-semibold text-slate-200 flex items-center gap-2">
-                        <i data-lucide="box" class="w-4 h-4 text-emerald-400"></i>
-                        關鍵備品清冊與替代料判定
-                    </h3>
-                    <span class="text-xs text-slate-400">66 台實體備品已建檔</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="p-3.5 bg-slate-950/60 rounded-lg border border-slate-800 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-200">變頻器 (YASKAWA CIMR-VU4A)</span>
-                            <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px]">庫存正常 (2台)</span>
-                        </div>
-                        <p class="text-slate-400">儲位：備品室 A/A-03-12 | 關鍵度：<span class="text-rose-400 font-bold">A 級 (停線關鍵)</span></p>
-                        <div class="text-[11px] text-slate-500 flex items-center gap-2">
-                            <span class="text-emerald-400">🟢 可直接替換 1 筆</span>
-                            <span>🟡 需重設參數 1 筆</span>
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                            <i data-lucide="activity" class="w-6 h-6"></i>
                         </div>
                     </div>
 
-                    <div class="p-3.5 bg-slate-950/60 rounded-lg border border-slate-800 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-200">高壓排風扇濾芯 (250mm)</span>
-                            <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px]">🔴 低於安全庫存</span>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400">設備健康指數 (平均)</p>
+                            <h3 class="text-2xl font-bold text-slate-100 mt-1">94.8 <span class="text-sm font-normal text-slate-400">%</span></h3>
+                            <p class="text-xs text-emerald-400 mt-1">良好 (1台待檢修)</p>
                         </div>
-                        <p class="text-slate-400">儲位：備品室 B/B-01-04 | 關鍵度：B 級</p>
-                        <p class="text-[11px] text-amber-400">⚠️ 已觸發採購通知需求</p>
+                        <div class="p-3 bg-cyan-500/10 text-cyan-400 rounded-lg">
+                            <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400">AI 節能建議節省額</p>
+                            <h3 class="text-2xl font-bold text-slate-100 mt-1">NT$ 48,200</h3>
+                            <p class="text-xs text-cyan-400 mt-1">本月累計優化效益</p>
+                        </div>
+                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
+                            <i data-lucide="trending-down" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400">未處理解決警報</p>
+                            <h3 class="text-2xl font-bold text-slate-100 mt-1">3 <span class="text-sm font-normal text-slate-400">件</span></h3>
+                            <p class="text-xs text-rose-400 mt-1">1 件高優先度</p>
+                        </div>
+                        <div class="p-3 bg-rose-500/10 text-rose-400 rounded-lg">
+                            <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-        </div>
+                <!-- 模擬區塊：即時儀表圖表預留區 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[300px]">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-base font-semibold text-slate-200">即時用電趨勢與 AI 預測負載</h2>
+                            <span class="text-xs text-slate-400">單位: kW</span>
+                        </div>
+                        <!-- 圖表預留盒 -->
+                        <div class="flex-1 my-4 bg-slate-950/50 border border-dashed border-slate-800 rounded-lg flex items-center justify-center text-slate-500 text-sm">
+                            [ 可在此接入 Chart.js / ECharts 趨勢圖表 ]
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 min-h-[300px]">
+                        <h2 class="text-base font-semibold text-slate-200 mb-4">AI 最新建議事項</h2>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">抑低用電</span>
+                                <p class="text-xs text-slate-300 mt-2">預計 14:00 將達到契約容量 90%，建議提前調升 2 號空調水冷機設定值 1°C。</p>
+                            </div>
+                            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                                <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">預測性維護</span>
+                                <p class="text-xs text-slate-300 mt-2">3 號冷卻水泵馬達振動頻率異常，建議安排於本週末預防性保養。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 機電設備維修分頁 (預留區) -->
+            <section id="tab-maintenance" class="tab-content hidden space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-slate-100">機電設備維修與預測性診斷</h2>
+                    <p class="text-xs text-slate-400 mt-1">管理馬達、變壓器、開關櫃等機電設備之健康度與維修工單</p>
+                </div>
+                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
+                    <i data-lucide="wrench" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <p class="text-slate-400 text-sm">【機電維修分頁】已預設完成，等候建置設備台帳與工單系統。</p>
+                </div>
+            </section>
+
+            <!-- 3. 能源管理 ISO 50001 分頁 (預留區) -->
+            <section id="tab-energy" class="tab-content hidden space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-slate-100">能源管理與 ISO 50001 數據指標</h2>
+                    <p class="text-xs text-slate-400 mt-1">能源績效指標 (EnPIs)、能源基線 (EnB) 與耗能統計</p>
+                </div>
+                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
+                    <i data-lucide="zap" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <p class="text-slate-400 text-sm">【能源管理分頁】已預設完成，等候建置 ISO 50001 分析看板。</p>
+                </div>
+            </section>
+
+            <!-- 4. AI 智慧決策與預測分頁 (預留區) -->
+            <section id="tab-ai-decision" class="tab-content hidden space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-slate-100">AI 智慧決策與排程優化引擎</h2>
+                    <p class="text-xs text-slate-400 mt-1">演算法產出最佳運轉策略、卸載最佳化與用電預測</p>
+                </div>
+                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
+                    <i data-lucide="brain-circuit" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <p class="text-slate-400 text-sm">【AI 決策分頁】已預設完成，等候建置模型參數與決策輸出介面。</p>
+                </div>
+            </section>
+
+            <!-- 5. 異常診斷與警報分頁 (預留區) -->
+            <section id="tab-alerts" class="tab-content hidden space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-slate-100">異常診斷與即時警報中心</h2>
+                    <p class="text-xs text-slate-400 mt-1">即時故障警告、電力品質 (THD) 監測與根因分析 (RCA)</p>
+                </div>
+                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
+                    <i data-lucide="alert-triangle" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <p class="text-slate-400 text-sm">【異常警報分頁】已預設完成，等候建置事件清單與推播設定。</p>
+                </div>
+            </section>
+
+            <!-- 6. 報表生成與系統設定分頁 (預留區) -->
+            <section id="tab-settings" class="tab-content hidden space-y-6">
+                <div class="border-b border-slate-800 pb-4">
+                    <h2 class="text-xl font-bold text-slate-100">報表自動生成與系統參數設定</h2>
+                    <p class="text-xs text-slate-400 mt-1">匯出 ISO 審查報表、使用者權限控制與 Modbus/IoT 介接設定</p>
+                </div>
+                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
+                    <i data-lucide="sliders" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <p class="text-slate-400 text-sm">【報表與設定分頁】已預設完成，等候建置系統參數頁面。</p>
+                </div>
+            </section>
+
+        </main>
     </div>
-</section>
 
-<!-- 完工與閉環回填彈出視窗 (Modal) -->
-<div id="feedback-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 class="font-bold text-slate-100 flex items-center gap-2">
-                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
-                維修完工與 AI 閉環資料回填
-            </h3>
-            <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-slate-200">✕</button>
-        </div>
+    <!-- 前端切換分頁 JavaScript -->
+    <script>
+        // 初始化 Lucide 圖示
+        lucide.createIcons();
 
-        <div class="space-y-3 text-xs">
-            <div>
-                <label class="block text-slate-400 mb-1">工單編號</label>
-                <input type="text" id="modal-wo-id" value="WO-202609-001" disabled class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-300 font-mono">
-            </div>
-            <div>
-                <label class="block text-slate-400 mb-1">實際故障原因 (寫入設備履歷庫)</label>
-                <select class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-200">
-                    <option>軸承磨損與偏心 (與 AI 診斷相符)</option>
-                    <option>聯軸器對中心偏移</option>
-                    <option>其他獨立異常原因</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-slate-400 mb-1">處置方式與更換備品 ID</label>
-                <textarea rows="3" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-200 placeholder-slate-600" placeholder="請精確填寫更換備品與處置步驟，供思碼特平台 AI 模型進行沉澱學習..."></textarea>
-            </div>
-        </div>
+        // 分頁切換邏輯
+        function switchTab(tabId) {
+            // 隱藏所有分頁內容
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.add('hidden'));
 
-        <div class="flex justify-end space-x-3 border-t border-slate-800 pt-3">
-            <button onclick="closeFeedbackModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 text-xs">取消</button>
-            <button onclick="submitFeedback()" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded hover:bg-emerald-400 text-xs">確認結案並寫入履歷</button>
-        </div>
-    </div>
-</div>
+            // 顯示點選的分頁
+            const activeTab = document.getElementById(tabId);
+            if (activeTab) {
+                activeTab.classList.remove('hidden');
+            }
 
-<!-- 新增 JavaScript 輔助函式 (放到 </body> 之前) -->
-<script>
-    function triggerQuickUpload() {
-        alert("【思碼特平台】已啟動拍照/掃碼模組：將自動進行 OCR 銘牌讀取與 AI 故障原因排序。");
-    }
+            // 更新按鈕樣式
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
+            });
 
-    function openFeedbackModal(woId) {
-        document.getElementById('modal-wo-id').value = woId;
-        const modal = document.getElementById('feedback-modal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeFeedbackModal() {
-        const modal = document.getElementById('feedback-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    function submitFeedback() {
-        alert("【思碼特平台】工單結案成功！數據已自動寫入設備履歷與 AI 決策模型中。");
-        closeFeedbackModal();
-    }
-</script>
+            // 高亮當前按鈕
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
+                activeBtn.classList.add('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+            }
+        }
+    </script>
+</body>
+</html>
