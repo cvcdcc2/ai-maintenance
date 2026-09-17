@@ -1,298 +1,828 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>機電維修與能源 AI 決策平台</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            500: '#06b6d4',
-                            600: '#0891b2',
-                            accent: '#10b981'
-                        }
-                    }
-                }
-            }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大亞 AI 機電維修決策平台 (自動換行版)</title>
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #151d30;
+            --bg-nav: #1e293b;
+            --primary: #38bdf8;
+            --primary-dark: #0284c7;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
-    </script>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-header {
+            background-color: var(--bg-nav);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid var(--success);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .pulse-dot {
+            width: 6px; height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .content-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 75px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sim-control-box {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.8));
+            border: 1px dashed var(--primary);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+        .sim-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .sim-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-nav);
+            color: var(--text-main);
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sim-btn.active {
+            background: var(--primary-dark);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 8px rgba(56,189,248,0.4);
+        }
+
+        .domain-selector {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 10px;
+        }
+        .domain-btn {
+            flex: 1;
+            padding: 6px 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .domain-btn.active {
+            background: var(--primary-dark);
+            color: white;
+            box-shadow: 0 0 6px rgba(56,189,248,0.3);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .stat-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+        .stat-num {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 2px;
+            font-family: monospace;
+        }
+        .stat-label { font-size: 10px; color: var(--text-sub); }
+
+        .chart-box {
+            width: 100%;
+            height: 90px;
+            background: #050811;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .chat-box {
+            background: #080d1a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .msg {
+            max-width: 85%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+        .msg-ai {
+            background: var(--bg-nav);
+            border-left: 3px solid var(--primary);
+            align-self: flex-start;
+        }
+        .msg-user {
+            background: var(--primary-dark);
+            color: white;
+            align-self: flex-end;
+        }
+
+        /* 🎯 自動換行樣式修改 */
+        .prompt-chips {
+            display: flex;
+            flex-wrap: wrap; /* 👈 關鍵：自動折行 */
+            gap: 6px 8px;
+            padding: 6px 0;
+        }
+        .chip {
+            white-space: nowrap; /* 確保個別按鈕內部文字不拆斷 */
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 14px;
+            font-size: 11px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .chip:active {
+            background: var(--primary-dark);
+        }
+
+        .sop-list { display: flex; flex-direction: column; gap: 8px; }
+        .sop-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            user-select: none;
+        }
+        .sop-item:hover { background: rgba(255,255,255,0.06); }
+        .sop-item input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+
+        .vision-preview {
+            position: relative;
+            width: 100%;
+            height: 170px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+        .bbox {
+            position: absolute;
+            border: 2px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.15);
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-start;
+            padding: 4px 6px;
+            font-size: 10px;
+            color: #00ffcc;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,255,204,0.5);
+            animation: pulseBbox 1.2s infinite alternate;
+        }
+        @keyframes pulseBbox { from { border-color: #00ffcc; } to { border-color: #38bdf8; } }
+
+        .btn-action {
+            width: 100%;
+            background: var(--primary-dark);
+            color: #fff;
+            border: none;
+            padding: 9px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        
+        .btn-action:disabled {
+            background: #1e293b !important;
+            color: #64748b !important;
+            border: 1px solid #334155 !important;
+            cursor: not-allowed !important;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            text-align: center;
+            max-width: 90%;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background-color: var(--bg-nav);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none; border: none;
+            color: var(--text-sub);
+            display: flex; flex-direction: column;
+            align-items: center; gap: 3px;
+            font-size: 11px; flex: 1; height: 100%;
+            cursor: pointer;
+        }
+        .nav-btn.active { color: var(--primary); font-weight: bold; }
+
+        .time-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+<body>
 
-    <!-- 上方導航欄 Top Header -->
-    <header class="h-16 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
-        <div class="flex items-center space-x-3">
-            <div class="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
-                <i data-lucide="cpu" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                    機電維修與能源 AI 決策平台
-                </h1>
-                <p class="text-xs text-slate-400">Electromechanical Maintenance & Energy AI Platform</p>
-            </div>
-        </div>
+    <div id="toast" class="toast">✓ 操作完成！</div>
 
-        <!-- 系統狀態與使用者資訊 -->
-        <div class="flex items-center space-x-4">
-            <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-slate-300">AI 監控引擎運作中</span>
-            </div>
-            <button class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition">
-                <i data-lucide="bell" class="w-5 h-5"></i>
-            </button>
-            <div class="h-6 w-px bg-slate-800"></div>
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-cyan-400 border border-cyan-500/30">
-                    AI
-                </div>
-                <span class="text-sm text-slate-300 font-medium hidden md:inline">系統管理員</span>
-            </div>
+    <header class="app-header">
+        <div class="app-title">⚡ 大亞 AI 機電維修平台</div>
+        <div class="live-tag">
+            <span class="pulse-dot"></span>
+            <span>SCADA 即時連線</span>
         </div>
     </header>
 
-    <!-- 主要內容區 Main Content Area -->
-    <div class="flex-1 flex overflow-hidden">
+    <main class="content-container">
 
-        <!-- 側邊欄 Navigation Sidebar (六大區塊分頁) -->
-        <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
-            <div class="p-4 space-y-1">
-                <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    平台核心模組
+        <!-- 頁籤 1: 即時監控 -->
+        <div id="tab-overview" class="tab-panel active">
+            <div class="sim-control-box">
+                <div style="font-size:11px; font-weight:bold; color:var(--primary); display:flex; justify-content:space-between;">
+                    <span>🎮 評審體驗：動態故障模擬切換</span>
+                    <span id="sim-status" style="color:var(--success);">[正常運轉中]</span>
                 </div>
-
-                <!-- 1. 總覽儀表板 -->
-                <button onclick="switchTab('tab-overview')" id="btn-tab-overview" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                    <span>總覽儀表板</span>
-                </button>
-
-                <!-- 2. 機電設備維修與診斷 -->
-                <button onclick="switchTab('tab-maintenance')" id="btn-tab-maintenance" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
-                    <i data-lucide="wrench" class="w-5 h-5"></i>
-                    <span>機電設備維修</span>
-                </button>
-
-                <!-- 3. 能源管理與 ISO 50001 -->
-                <button onclick="switchTab('tab-energy')" id="btn-tab-energy" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
-                    <i data-lucide="zap" class="w-5 h-5"></i>
-                    <span>能源管理 ISO 50001</span>
-                </button>
-
-                <!-- 4. AI 智慧決策與預測 -->
-                <button onclick="switchTab('tab-ai-decision')" id="btn-tab-ai-decision" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
-                    <i data-lucide="brain-circuit" class="w-5 h-5"></i>
-                    <span>AI 決策與預測</span>
-                </button>
-
-                <!-- 5. 異常診斷與警報 -->
-                <button onclick="switchTab('tab-alerts')" id="btn-tab-alerts" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                    <span>異常診斷與警報</span>
-                </button>
-
-                <!-- 6. 報表生成與系統設定 -->
-                <button onclick="switchTab('tab-settings')" id="btn-tab-settings" 
-                    class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
-                    <i data-lucide="sliders" class="w-5 h-5"></i>
-                    <span>報表與系統設定</span>
-                </button>
+                <div class="sim-btn-group">
+                    <button class="sim-btn active" onclick="setSimMode('normal', this)">✅ 正常運轉</button>
+                    <button class="sim-btn" onclick="setSimMode('fault1', this)">🚨 軸承過熱 (機械)</button>
+                    <button class="sim-btn" onclick="setSimMode('fault2', this)">⚠️ 絕緣衰退 (電氣)</button>
+                </div>
             </div>
 
-            <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
-                系統版本 v1.0.0-Beta
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📈 AC-01 高壓馬達即時遙測</span>
+                    <span id="status-badge" class="badge" style="background:rgba(16,185,129,0.2); color:var(--success); font-size:11px; padding:2px 6px; border-radius:4px;">正常</span>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">軸承溫度 (°C)</div>
+                        <div id="val-temp" class="stat-num" style="color:var(--success);">42.5</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">振動值 (mm/s)</div>
+                        <div id="val-vib" class="stat-num" style="color:var(--success);">1.2</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">運轉電流 (A)</div>
+                        <div id="val-amp" class="stat-num" style="color:var(--primary);">68.4</div>
+                    </div>
+                </div>
+
+                <div style="font-size:10px; color:var(--text-sub); margin-bottom:2px;">即時 Vibration / Current 諧波與震幅波形：</div>
+                <canvas id="waveformCanvas" class="chart-box"></canvas>
             </div>
-        </aside>
 
-        <!-- 主展現區 Content Body -->
-        <main class="flex-1 overflow-y-auto p-6 bg-slate-950">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🤖 AI 即時根本原因分析 (RCA)</span>
+                </div>
+                <div id="ai-diagnosis-content" style="font-size:12px; line-height:1.6; color:var(--text-sub);">
+                    目前設備運轉參數符合 ISO 國際標準，無異常預警。
+                </div>
+                <button class="btn-action" style="margin-top:8px;" onclick="switchTab('tab-ai', document.querySelectorAll('.nav-btn')[1])">開啟 AI 維修助手深入對話</button>
+            </div>
+        </div>
 
-            <!-- 1. 總覽儀表板內容 (預設顯示) -->
-            <section id="tab-overview" class="tab-content space-y-6">
-                <!-- 頂部 KPI 卡片 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-slate-400">即時總用電負載</p>
-                            <h3 class="text-2xl font-bold text-slate-100 mt-1">1,280 <span class="text-sm font-normal text-slate-400">kW</span></h3>
-                            <p class="text-xs text-emerald-400 mt-1">↓ 較昨日降 4.2%</p>
-                        </div>
-                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg">
-                            <i data-lucide="activity" class="w-6 h-6"></i>
-                        </div>
-                    </div>
+        <!-- 頁籤 2: 互動式 AI 助手 -->
+        <div id="tab-ai" class="tab-panel">
+            <div class="card" style="margin-bottom:8px;">
+                <div class="card-title">💬 大亞 LLM 機電維修 Expert Agent</div>
+                <div style="font-size:11px; color:var(--text-sub); margin-top:2px;">結合內部設備手冊與歷史維修履歷之 RAG 知識庫</div>
+            </div>
 
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-slate-400">設備健康指數 (平均)</p>
-                            <h3 class="text-2xl font-bold text-slate-100 mt-1">94.8 <span class="text-sm font-normal text-slate-400">%</span></h3>
-                            <p class="text-xs text-emerald-400 mt-1">良好 (1台待檢修)</p>
-                        </div>
-                        <div class="p-3 bg-cyan-500/10 text-cyan-400 rounded-lg">
-                            <i data-lucide="shield-check" class="w-6 h-6"></i>
-                        </div>
-                    </div>
+            <div id="chatBox" class="chat-box">
+                <div class="msg msg-ai">
+                    👋 您好！我是大亞 AI 維修助手。您可以點選下方快捷提問，或切換「總覽」分頁模擬故障事件，我將即時為您分析！
+                </div>
+            </div>
 
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-slate-400">AI 節能建議節省額</p>
-                            <h3 class="text-2xl font-bold text-slate-100 mt-1">NT$ 48,200</h3>
-                            <p class="text-xs text-cyan-400 mt-1">本月累計優化效益</p>
-                        </div>
-                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg">
-                            <i data-lucide="trending-down" class="w-6 h-6"></i>
-                        </div>
-                    </div>
+            <div style="margin-top:8px;">
+                <div style="font-size:11px; color:var(--text-sub); margin-bottom:4px;">💡 快速詢問 AI 專家：</div>
+                <div class="prompt-chips">
+                    <div class="chip" onclick="askAI('分析 AC-01 目前的異常原因與處置步驟')">🔍 分析 AC-01 異常原因</div>
+                    <div class="chip" onclick="askAI('請提供高壓馬達絕緣電阻量測 SOP')">📏 絕緣電阻量測 SOP</div>
+                    <div class="chip" onclick="askAI('這項故障對 ISO 50001 能耗有何影響？')">🌱 ISO 50001 能耗評估</div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-slate-400">未處理解決警報</p>
-                            <h3 class="text-2xl font-bold text-slate-100 mt-1">3 <span class="text-sm font-normal text-slate-400">件</span></h3>
-                            <p class="text-xs text-rose-400 mt-1">1 件高優先度</p>
-                        </div>
-                        <div class="p-3 bg-rose-500/10 text-rose-400 rounded-lg">
-                            <i data-lucide="alert-circle" class="w-6 h-6"></i>
-                        </div>
-                    </div>
+        <!-- 頁籤 3: 視覺識別與動態 SOP -->
+        <div id="tab-vision" class="tab-panel">
+            
+            <div class="domain-selector">
+                <button id="btn-domain-mech" class="domain-btn active" onclick="setDomainMode('mech')">⚙️ 機械維護 (熱影像/軸承)</button>
+                <button id="btn-domain-elec" class="domain-btn" onclick="setDomainMode('elec')">⚡ 電氣維護 (銘牌/繞組/端子)</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span id="vision-card-title" class="card-title">📷 AI 視覺：熱影像熱點辨識</span>
+                    <span id="domain-badge" style="background:rgba(56,189,248,0.15); color:var(--primary); font-size:10px; padding:2px 6px; border-radius:4px;">機械領域</span>
                 </div>
 
-                <!-- 模擬區塊：即時儀表圖表預留區 -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[300px]">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-base font-semibold text-slate-200">即時用電趨勢與 AI 預測負載</h2>
-                            <span class="text-xs text-slate-400">單位: kW</span>
-                        </div>
-                        <!-- 圖表預留盒 -->
-                        <div class="flex-1 my-4 bg-slate-950/50 border border-dashed border-slate-800 rounded-lg flex items-center justify-center text-slate-500 text-sm">
-                            [ 可在此接入 Chart.js / ECharts 趨勢圖表 ]
-                        </div>
+                <div class="vision-preview">
+                    <div id="visionBox" class="bbox" style="top:25%; left:30%; width:110px; height:80px;">
+                        🔥 熱點: 88.5°C<br>(驅動端軸承)
                     </div>
-
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 min-h-[300px]">
-                        <h2 class="text-base font-semibold text-slate-200 mb-4">AI 最新建議事項</h2>
-                        <div class="space-y-3">
-                            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">抑低用電</span>
-                                <p class="text-xs text-slate-300 mt-2">預計 14:00 將達到契約容量 90%，建議提前調升 2 號空調水冷機設定值 1°C。</p>
-                            </div>
-                            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">預測性維護</span>
-                                <p class="text-xs text-slate-300 mt-2">3 號冷卻水泵馬達振動頻率異常，建議安排於本週末預防性保養。</p>
-                            </div>
-                        </div>
+                    <div id="visionLabel" style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.7); font-size:10px; padding:3px 8px; border-radius:4px;">
+                        📸 FLIR 紅外線熱影像分析 (過熱區域辨識)
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- 2. 機電設備維修分頁 (預留區) -->
-            <section id="tab-maintenance" class="tab-content hidden space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-xl font-bold text-slate-100">機電設備維修與預測性診斷</h2>
-                    <p class="text-xs text-slate-400 mt-1">管理馬達、變壓器、開關櫃等機電設備之健康度與維修工單</p>
+            <div class="card">
+                <div class="card-title" style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="sop-title">🛠️ 現場檢修 SOP 檢核表</span>
+                    <span id="sop-progress-tag" style="font-size:10px; color:var(--warning); background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px;">檢修中 (0/4)</span>
                 </div>
-                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
-                    <i data-lucide="wrench" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                    <p class="text-slate-400 text-sm">【機電維修分頁】已預設完成，等候建置設備台帳與工單系統。</p>
-                </div>
-            </section>
 
-            <!-- 3. 能源管理 ISO 50001 分頁 (預留區) -->
-            <section id="tab-energy" class="tab-content hidden space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-xl font-bold text-slate-100">能源管理與 ISO 50001 數據指標</h2>
-                    <p class="text-xs text-slate-400 mt-1">能源績效指標 (EnPIs)、能源基線 (EnB) 與耗能統計</p>
+                <div class="time-box">
+                    <span>⏱️ 本次工單累計總維修工時：</span>
+                    <span id="total-hours-display" style="font-weight:bold; color:var(--primary); font-family:monospace; font-size:12px;">1.5 小時</span>
                 </div>
-                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
-                    <i data-lucide="zap" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                    <p class="text-slate-400 text-sm">【能源管理分頁】已預設完成，等候建置 ISO 50001 分析看板。</p>
+                
+                <div id="sopContainer" class="sop-list">
+                    <!-- JS 動態寫入 SOP -->
                 </div>
-            </section>
 
-            <!-- 4. AI 智慧決策與預測分頁 (預留區) -->
-            <section id="tab-ai-decision" class="tab-content hidden space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-xl font-bold text-slate-100">AI 智慧決策與排程優化引擎</h2>
-                    <p class="text-xs text-slate-400 mt-1">演算法產出最佳運轉策略、卸載最佳化與用電預測</p>
+                <div style="display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; margin-top:12px;">
+                    <button id="btn-complete" class="btn-action" style="background:var(--success);" disabled onclick="triggerComplete()">✅ 完工結案</button>
+                    <button id="btn-pause" class="btn-action" style="background:var(--warning); color:#000;" onclick="triggerPause()">⏸️ 暫停維修</button>
+                    <button id="btn-escalate" class="btn-action" style="background:var(--danger);" onclick="triggerEscalate()">🚨 二次派工</button>
                 </div>
-                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
-                    <i data-lucide="brain-circuit" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                    <p class="text-slate-400 text-sm">【AI 決策分頁】已預設完成，等候建置模型參數與決策輸出介面。</p>
-                </div>
-            </section>
+            </div>
+        </div>
 
-            <!-- 5. 異常診斷與警報分頁 (預留區) -->
-            <section id="tab-alerts" class="tab-content hidden space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-xl font-bold text-slate-100">異常診斷與即時警報中心</h2>
-                    <p class="text-xs text-slate-400 mt-1">即時故障警告、電力品質 (THD) 監測與根因分析 (RCA)</p>
+        <!-- 頁籤 4: 安全防護 -->
+        <div id="tab-safety" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🛡️ Safety Rule 安全紅線檢核</span>
+                    <span class="badge" style="background:rgba(16,185,129,0.2); color:var(--success); font-size:11px; padding:2px 6px; border-radius:4px;">系統防護中</span>
                 </div>
-                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
-                    <i data-lucide="alert-triangle" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                    <p class="text-slate-400 text-sm">【異常警報分頁】已預設完成，等候建置事件清單與推播設定。</p>
+                <div style="font-size:12px; line-height:1.8;">
+                    ✓ 隔離防護機制：AI 僅擁有唯讀決策權，無法跳過 PLC 人機硬體連鎖控制。<br>
+                    ✓ 權限管理：高壓防爆區域施工自動要求「生產部門主管」雙重驗證。<br>
+                    ✓ ISO 50001 能源規範：修復後預計將節省 4.2% 效能損耗。
                 </div>
-            </section>
+            </div>
+        </div>
 
-            <!-- 6. 報表生成與系統設定分頁 (預留區) -->
-            <section id="tab-settings" class="tab-content hidden space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-xl font-bold text-slate-100">報表自動生成與系統參數設定</h2>
-                    <p class="text-xs text-slate-400 mt-1">匯出 ISO 審查報表、使用者權限控制與 Modbus/IoT 介接設定</p>
-                </div>
-                <div class="p-12 border border-dashed border-slate-800 rounded-xl bg-slate-900/30 text-center">
-                    <i data-lucide="sliders" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-                    <p class="text-slate-400 text-sm">【報表與設定分頁】已預設完成，等候建置系統參數頁面。</p>
-                </div>
-            </section>
+    </main>
 
-        </main>
-    </div>
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('tab-overview', this)">
+            <span style="font-size:16px;">📊</span>
+            <span>即時監控</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-ai', this)">
+            <span style="font-size:16px;">🤖</span>
+            <span>AI對話</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-vision', this)">
+            <span style="font-size:16px;">📸</span>
+            <span>視覺SOP</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('tab-safety', this)">
+            <span style="font-size:16px;">🛡️</span>
+            <span>安全防護</span>
+        </button>
+    </nav>
 
-    <!-- 前端切換分頁 JavaScript -->
     <script>
-        // 初始化 Lucide 圖示
-        lucide.createIcons();
+        let accumulatedHours = 1.5;
 
-        // 分頁切換邏輯
-        function switchTab(tabId) {
-            // 隱藏所有分頁內容
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.add('hidden'));
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+        }
 
-            // 顯示點選的分頁
-            const activeTab = document.getElementById(tabId);
-            if (activeTab) {
-                activeTab.classList.remove('hidden');
+        const canvas = document.getElementById('waveformCanvas');
+        const ctx = canvas.getContext('2d');
+        let waveOffset = 0;
+        let currentMode = 'normal';
+
+        function drawWaveform() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            
+            if(currentMode === 'normal') ctx.strokeStyle = '#10b981';
+            else if(currentMode === 'fault1') ctx.strokeStyle = '#ef4444';
+            else ctx.strokeStyle = '#f59e0b';
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const mid = height / 2;
+
+            for (let x = 0; x < width; x++) {
+                let amplitude = currentMode === 'fault1' ? 25 : (currentMode === 'fault2' ? 15 : 6);
+                let frequency = currentMode === 'fault1' ? 0.15 : 0.05;
+                let noise = (Math.random() - 0.5) * (currentMode === 'normal' ? 2 : 12);
+                
+                let y = mid + Math.sin((x + waveOffset) * frequency) * amplitude + noise;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             }
+            ctx.stroke();
+            waveOffset += currentMode === 'fault1' ? 4 : 2;
+            requestAnimationFrame(drawWaveform);
+        }
+        drawWaveform();
 
-            // 更新按鈕樣式
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(btn => {
-                btn.classList.remove('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
-                btn.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
-            });
+        setInterval(() => {
+            let tempEl = document.getElementById('val-temp');
+            let vibEl = document.getElementById('val-vib');
+            let ampEl = document.getElementById('val-amp');
 
-            // 高亮當前按鈕
-            const activeBtn = document.getElementById('btn-' + tabId);
-            if (activeBtn) {
-                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-slate-200');
-                activeBtn.classList.add('bg-cyan-500/10', 'text-cyan-400', 'border', 'border-cyan-500/20');
+            let baseTemp = currentMode === 'fault1' ? 88.5 : (currentMode === 'fault2' ? 52.0 : 42.5);
+            let baseVib = currentMode === 'fault1' ? 6.8 : (currentMode === 'fault2' ? 2.4 : 1.2);
+            let baseAmp = currentMode === 'fault1' ? 82.1 : (currentMode === 'fault2' ? 74.0 : 68.4);
+
+            tempEl.innerText = (baseTemp + (Math.random() * 0.8 - 0.4)).toFixed(1);
+            vibEl.innerText = (baseVib + (Math.random() * 0.2 - 0.1)).toFixed(1);
+            ampEl.innerText = (baseAmp + (Math.random() * 0.6 - 0.3)).toFixed(1);
+        }, 1200);
+
+        function setSimMode(mode, btn) {
+            currentMode = mode;
+            document.querySelectorAll('.sim-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const statusText = document.getElementById('sim-status');
+            const badge = document.getElementById('status-badge');
+            const aiDiag = document.getElementById('ai-diagnosis-content');
+
+            if(mode === 'normal') {
+                statusText.innerText = '[正常運轉中]';
+                statusText.style.color = 'var(--success)';
+                badge.innerText = '正常';
+                badge.style.background = 'rgba(16,185,129,0.2)';
+                badge.style.color = 'var(--success)';
+                aiDiag.innerHTML = '✅ 目前設備運轉參數符合 ISO 國際標準，無異常預警。';
+            } else if(mode === 'fault1') {
+                statusText.innerText = '[🚨 軸承過熱告警]';
+                statusText.style.color = 'var(--danger)';
+                badge.innerText = '機械高危';
+                badge.style.background = 'rgba(239,68,68,0.2)';
+                badge.style.color = 'var(--danger)';
+                aiDiag.innerHTML = `<span style="color:var(--danger); font-weight:bold;">🚨 偵測到驅動端軸承過熱 (88.5°C) 且振動值達 6.8 mm/s！</span><br>
+                <b>AI 概率診斷：</b><br>
+                1. 軸承潤滑油乾涸 / 磨損 (82% 可能性)<br>
+                2. 軸心偏心不良 (12% 可能性)<br>
+                💡 建議現場維修員至「視覺SOP」執行補充潤滑油與雷射對心。`;
+            } else if(mode === 'fault2') {
+                statusText.innerText = '[⚠️ 絕緣警示]';
+                statusText.style.color = 'var(--warning)';
+                badge.innerText = '電氣預警';
+                badge.style.background = 'rgba(245,158,11,0.2)';
+                badge.style.color = 'var(--warning)';
+                aiDiag.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ 三相電流不平衡度達 7.2%，阻值出現異常。</span><br>
+                <b>AI 概率診斷：</b><br>
+                1. 馬達繞組線圈局部絕緣衰退 (68% 可能性)<br>
+                2. 端子台鬆脫接觸不良 (24% 可能性)<br>
+                💡 建議現場電氣技師至「視覺SOP」執行 Megger 1000V 絕緣測試。`;
             }
         }
+
+        function setDomainMode(domain) {
+            const btnMech = document.getElementById('btn-domain-mech');
+            const btnElec = document.getElementById('btn-domain-elec');
+            const titleEl = document.getElementById('vision-card-title');
+            const badgeEl = document.getElementById('domain-badge');
+            const bbox = document.getElementById('visionBox');
+            const label = document.getElementById('visionLabel');
+            const sopTitle = document.getElementById('sop-title');
+            const sopContainer = document.getElementById('sopContainer');
+
+            resetButtons();
+
+            if(domain === 'mech') {
+                btnMech.classList.add('active');
+                btnElec.classList.remove('active');
+
+                titleEl.innerText = '📷 AI 視覺：熱影像熱點辨識';
+                badgeEl.innerText = '機械領域';
+                badgeEl.style.color = 'var(--primary)';
+
+                bbox.style.top = '25%'; bbox.style.left = '30%'; bbox.style.width = '110px'; bbox.style.height = '80px';
+                bbox.innerHTML = '🔥 熱點: 88.5°C<br>(驅動端軸承)';
+                label.innerText = '📸 FLIR 紅外線熱影像分析 (過熱區域辨識)';
+
+                sopTitle.innerText = '🛠️ 現場機械軸承檢修 SOP';
+                sopContainer.innerHTML = `
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❶ 執行 Lockout/Tagout (LOTO) 機械斷電標示
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❷ 使用自動潤滑槍補充 SKF LGHP 2 高溫潤滑脂
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❸ 使用雷射對心儀 (Laser Alignment) 校正偏心量
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--primary);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❹ 鎖固地腳螺栓並以振動計複測 (目標 < 2.8 mm/s)
+                    </label>
+                `;
+            } else {
+                btnElec.classList.add('active');
+                btnMech.classList.remove('active');
+
+                titleEl.innerText = '📷 AI 視覺：銘牌 OCR 與端子盤分析';
+                badgeEl.innerText = '電氣領域';
+                badgeEl.style.color = 'var(--warning)';
+
+                bbox.style.top = '20%'; bbox.style.left = '15%'; bbox.style.width = '160px'; bbox.style.height = '70px';
+                bbox.innerHTML = '🏷️ 銘牌 OCR 辨識<br>380V / 71.5A / 37kW';
+                label.innerText = '📸 銘牌與控制盤面圖像辨識 (電氣參數標籤)';
+
+                sopTitle.innerText = '⚡ 現場電氣絕緣與阻值檢測 SOP';
+                sopContainer.innerHTML = `
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❶ 高壓盤面斷電，並使用三用電表確認無殘留電壓
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❷ 使用三用電表量測 U-V, V-W, W-U 線圈阻值
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❸ 使用 1000V 高阻計 (Megger) 量測對地絕緣阻值
+                    </label>
+                    <label class="sop-item" style="border-left-color: var(--warning);">
+                        <input type="checkbox" onchange="checkSopProgress()"> ❹ 扭力板手鎖固二次側端子台，熱像儀確認無異常溫升
+                    </label>
+                `;
+            }
+
+            checkSopProgress();
+        }
+
+        function checkSopProgress() {
+            const checkboxes = document.querySelectorAll('#sopContainer input[type="checkbox"]');
+            const btnComplete = document.getElementById('btn-complete');
+            const progressTag = document.getElementById('sop-progress-tag');
+            
+            let checkedCount = 0;
+            checkboxes.forEach(cb => { if(cb.checked) checkedCount++; });
+
+            const total = checkboxes.length;
+
+            if(checkedCount === total && total > 0) {
+                btnComplete.disabled = false;
+                progressTag.innerText = `SOP已全完成 (${checkedCount}/${total})`;
+                progressTag.style.background = 'rgba(16,185,129,0.2)';
+                progressTag.style.color = 'var(--success)';
+            } else {
+                btnComplete.disabled = true;
+                progressTag.innerText = `檢核中 (${checkedCount}/${total})`;
+                progressTag.style.background = 'rgba(245,158,11,0.15)';
+                progressTag.style.color = 'var(--warning)';
+            }
+        }
+
+        function resetButtons() {
+            const btnComplete = document.getElementById('btn-complete');
+            const btnPause = document.getElementById('btn-pause');
+            const btnEscalate = document.getElementById('btn-escalate');
+
+            btnComplete.disabled = true;
+            btnComplete.innerText = '✅ 完工結案';
+            btnComplete.style.background = 'var(--success)';
+
+            btnPause.disabled = false;
+            btnPause.innerText = '⏸️ 暫停維修';
+            
+            btnEscalate.disabled = false;
+            btnEscalate.innerText = '🚨 二次派工';
+        }
+
+        function askAI(questionText) {
+            const chatBox = document.getElementById('chatBox');
+            
+            const userMsg = document.createElement('div');
+            userMsg.className = 'msg msg-user';
+            userMsg.innerText = questionText;
+            chatBox.appendChild(userMsg);
+
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'msg msg-ai';
+            aiMsg.innerText = '🤖 分析中...';
+            chatBox.appendChild(aiMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            setTimeout(() => {
+                let answer = '';
+                if(questionText.includes('異常原因')) {
+                    answer = '根據即時數據：AC-01 驅動端軸承高溫 88.5°C 且振動高達 6.8 mm/s。對照大亞知識庫，82% 為潤滑油脂乾涸；若是電氣不平衡 (7.2%) 則為繞組老化。';
+                } else if(questionText.includes('絕緣')) {
+                    answer = '【電氣維護：高壓馬達絕緣測量 SOP】\n1. 斷電驗電並執行 LOTO\n2. 使用 1000V Megger 測量\n3. 對地絕緣阻值須 > 100 MΩ；三相阻值不平衡率須 < 2%。';
+                } else {
+                    answer = '【ISO 50001 影響評估】\n軸承摩擦阻力及電氣絕緣衰退會使馬達效率下降 4.2%，每年額外浪費約 12,500 度電。建議立即派工處置。';
+                }
+
+                aiMsg.innerText = '';
+                let i = 0;
+                let timer = setInterval(() => {
+                    aiMsg.innerText += answer[i];
+                    i++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    if(i >= answer.length) clearInterval(timer);
+                }, 20);
+            }, 800);
+        }
+
+        function triggerComplete() {
+            const btnComplete = document.getElementById('btn-complete');
+            const btnPause = document.getElementById('btn-pause');
+            const btnEscalate = document.getElementById('btn-escalate');
+
+            btnComplete.innerText = '🎉 已完工結案';
+            btnPause.disabled = true;
+            btnEscalate.disabled = true;
+
+            showToast('✅ 當天成功排除！工單已完工結案，封鎖二次派工。', 'var(--success)');
+        }
+
+        function triggerPause() {
+            accumulatedHours += 2.0;
+            document.getElementById('total-hours-display').innerText = `${accumulatedHours.toFixed(1)} 小時`;
+
+            const progressTag = document.getElementById('sop-progress-tag');
+            progressTag.innerText = '⏸️ 暫停維修中';
+            progressTag.style.background = 'rgba(245,158,11,0.2)';
+            progressTag.style.color = 'var(--warning)';
+
+            showToast(`⏸️ 已記錄暫停維修！今日維修工時已追加累計（總計: ${accumulatedHours.toFixed(1)}h），未觸發二次派工。`, 'var(--warning)');
+        }
+
+        function triggerEscalate() {
+            const btnEscalate = document.getElementById('btn-escalate');
+            btnEscalate.innerText = '🚨 已啟動二次派工';
+            btnEscalate.disabled = true;
+
+            showToast('🚨 判斷需要二次派工！已發送後援大修申請單並記錄於維修履歷。', 'var(--danger)');
+        }
+
+        function showToast(message, bgColor) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.background = bgColor;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        setDomainMode('mech');
     </script>
 </body>
 </html>
